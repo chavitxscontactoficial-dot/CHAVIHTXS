@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CHAVIHTXS - PWA</title>
+  <meta name="theme-color" content="#120206">
+  
+  <!-- Estilos e Iconos -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,600;0,800;0,900;1,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div id="app-container">
+
+    <!-- HEADER INSTITUCIONAL (Fijo) -->
+    <header class="brand-header">
+      <div class="sub-brand"><span class="deo">DEO</span> <span class="arm">ARM</span></div>
+      <div class="main-brand"><span class="cha">CHA</span><span class="vih">VIH</span><span class="txs">TXS</span></div>
+    </header>
+
+    <!-- MÓDULO 1: SALUD / INICIO -->
+    <section id="view-module1" class="page-view active">
+      <div class="user-greeting">
+        Hola, <strong id="user-nickname-display">amiga</strong>.<br>
+        Este es tu resumen de Salud hasta hoy.
+      </div>
+
+      <h1 class="section-title" id="treatment-title-display">MI TAR</h1>
+
+      <div class="status-card">
+        <div class="status-badge" id="status-badge">
+          <i class="fa-solid fa-shield-halved"></i>
+          <span id="status-badge-text">STATUS I=I</span>
+        </div>
+        <p class="status-description" id="status-desc-text">
+          Carga viral Indetectable. ¡Indetectable es Igual a Intransmisible! Vas en excelente camino.
+        </p>
+
+        <div class="streak-bar">
+          <span class="label"><i class="fa-solid fa-fire" style="color: #f59e0b;"></i> Racha:</span>
+          <span class="val" id="streak-time-display">0 días</span>
+        </div>
+      </div>
+
+      <div class="grid-two-cards">
+        <div class="info-box">
+          <div class="box-title">
+            <span>Esquema Actual</span>
+            <i class="fa-solid fa-pills" style="color: var(--cochineal);"></i>
+          </div>
+          <div class="box-value" id="stock-count-display">30</div>
+          <div class="box-unit" id="med-name-display">Pastillas en Stock</div>
+        </div>
+
+        <div class="info-box">
+          <div class="box-title">
+            <span>CD4</span>
+            <button class="btn-icon" onclick="promptUpdateCD4()"><i class="fa-solid fa-pen"></i></button>
+          </div>
+          <div class="box-value" id="cd4-display">--</div>
+          <div class="box-unit">cel/mm³</div>
+        </div>
+      </div>
+
+      <div class="action-container">
+        <button class="btn-dosis" id="btn-dosis" onclick="markDoseTaken()">
+          <i class="fa-solid fa-check-circle" id="btn-dosis-text-icon"></i>
+          <span id="btn-dosis-text">DOSIS LISTA</span>
+        </button>
+        <div class="action-legend">¿ya tomaste tu pastilla?</div>
+      </div>
+
+      <!-- PRÓXIMAS CITAS MÉDICAS -->
+      <div class="flex-between" style="margin-bottom: 12px;">
+        <div class="section-title" style="margin-bottom:0;"><i class="fa-solid fa-user-doctor" style="color: var(--cochineal);"></i> Próxima Cita Médica</div>
+        <button class="btn-inv" style="padding: 6px 12px;" onclick="addMedicalAppointment()"><i class="fa-solid fa-plus"></i> Añadir</button>
+      </div>
+      <div class="card-box" id="medical-list-container">
+        <p class="text-gray-12">No tienes citas médicas programadas.</p>
+      </div>
+    </section>
+
+    <!-- MÓDULO 2: MI TRATAMIENTO -->
+    <section id="view-module2" class="page-view">
+      <div class="section-title"><i class="fa-solid fa-clock" style="color: var(--cochineal);"></i> Próxima toma</div>
+      <div class="card-box flex-between">
+        <div>
+          <div class="text-bold-16" id="mod2-med-name">Dovato</div>
+          <div class="text-gray-12">Tomar 1 tableta diaria de TAR</div>
+        </div>
+        <div class="time-badge" onclick="editDoseTime()">
+          <i class="fa-solid fa-pen" style="font-size: 11px;"></i>
+          <span id="mod2-dose-time">09:00 AM</span>
+        </div>
+      </div>
+
+      <div class="section-title"><i class="fa-solid fa-clipboard-question" style="color: var(--cochineal);"></i> Notas para tu consulta</div>
+      <div class="card-box">
+        <p class="text-gray-12">¿Hay algo que necesites decirle a tu médicx sobre tu tratamiento?</p>
+        <textarea id="doctor-notes" class="notes-input" rows="3" placeholder="Ej. Síntomas leves, dudas sobre medicamentos..."></textarea>
+        <button class="btn-inv" style="float: right; margin-top: 8px; padding: 6px 12px;" onclick="saveDoctorNotes()">Guardar nota</button>
+        <div style="clear: both;"></div>
+      </div>
+
+      <div class="section-title"><i class="fa-solid fa-boxes-stacked" style="color: var(--cochineal);"></i> Inventario</div>
+      <div class="card-box">
+        <div class="inventory-stats">
+          <div class="stat-item">
+            <div class="stat-val" id="count-bottles">1</div>
+            <div class="stat-lbl">Frasco(s) Extra</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-val" id="count-pills">30</div>
+            <div class="stat-lbl">Pastillas Frasco Actual</div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn-inv" onclick="addFullBottle()"><i class="fa-solid fa-plus"></i> +1 Frasco</button>
+          <button class="btn-inv" onclick="resetPillCount()"><i class="fa-solid fa-rotate-left"></i> Reset Pastillas</button>
+        </div>
+
+        <div class="alert-empty-bottle" id="empty-bottle-alert">
+          <p class="alert-title"><i class="fa-solid fa-triangle-exclamation"></i> ¡Frasco sin pastillas!</p>
+          <button class="btn-alert" onclick="openNewBottle()">Abrir nuevo frasco (30 pastillas)</button>
+        </div>
+      </div>
+
+      <!-- CITAS DE RESURTIDO / RE-STOCK -->
+      <div class="flex-between" style="margin-bottom: 12px;">
+        <div class="section-title" style="margin-bottom:0;"><i class="fa-solid fa-truck-medical" style="color: var(--cochineal);"></i> Citas de Resurtido</div>
+        <button class="btn-inv" style="padding: 6px 12px;" onclick="addRefillAppointment()"><i class="fa-solid fa-plus"></i> Añadir</button>
+      </div>
+      <div class="card-box" id="refill-list-container">
+        <p class="text-gray-12">No tienes citas de resurtido registradas.</p>
+      </div>
+    </section>
+
+    <!-- MÓDULO 3: APRENDER -->
+    <section id="view-module3" class="page-view">
+      <div class="section-title"><i class="fa-solid fa-graduation-cap" style="color: var(--cochineal);"></i> Espacio de Apoyo & Aprendizaje</div>
+      <p class="text-gray-12" style="margin-bottom: 20px;">Información clara, sin estigmas y acompañada por nuestros personajes de apoyo.</p>
+
+      <!-- SECCIÓN 1: DIAGNÓSTICO RECIENTE -->
+      <div class="learn-category-card">
+        <div class="mascot-header">
+          <div class="mascot-avatar">🩺✨</div>
+          <div>
+            <h3 class="category-title">1. Diagnóstico Reciente</h3>
+            <p class="category-sub">Un abrazo cálido y respuestas tranquilizadoras.</p>
+          </div>
+        </div>
+
+        <details class="learn-item">
+          <summary>¿Qué significa tener VIH?</summary>
+          <p>Significa que el Virus de la Inmunodeficiencia Humana está en tu organismo. Sin embargo, con los medicamentos actuales (Tratamiento Antirretroviral / TAR), el virus se congela y no destruye tu sistema inmune. Es una condición de salud crónica perfectamente manejable, como la diabetes o la hipertensión.</p>
+        </details>
+
+        <details class="learn-item">
+          <summary>¿Voy a morir?</summary>
+          <p><strong>¡No!</strong> Gracias a la medicina moderna, tu esperanza y calidad de vida son exactamente iguales a las de cualquier persona sin VIH. Tomando tu tratamiento diariamente, vivirás una vida larga, sana y plena.</p>
+        </details>
+
+        <details class="learn-item">
+          <summary>¿Puedo tener pareja?</summary>
+          <p><strong>¡Por supuesto que sí!</strong> Puedes enamorarte, salir con quien quieras, tener relaciones placenteras y formar una familia. El VIH no define tu valor ni tu capacidad de amar.</p>
+        </details>
+
+        <details class="learn-item">
+          <summary>¿Voy a poder trabajar?</summary>
+          <p><strong>Sí, sin ninguna limitación.</strong> El VIH no afecta tus habilidades intelectuales ni físicas para desempeñarte en cualquier profesión, oficio o carrera laboral.</p>
+        </details>
+
+        <details class="learn-item">
+          <summary>¿Tengo la obligación de compartir mi diagnóstico?</summary>
+          <p><strong>¡Absolutamente no!</strong> Tu diagnóstico es tuyo, privado y personalísimo. Nadie tiene derecho a exigirte que lo reveles. Tú decides a quién se lo cuentas, cuándo se lo dices y bajo qué circunstancias. Tu privacidad es sagrada.</p>
+        </details>
+      </div>
+
+      <!-- SECCIÓN 2: TRATAMIENTO -->
+      <div class="learn-category-card">
+        <div class="mascot-header">
+          <div class="mascot-avatar">💊🛡️</div>
+          <div>
+            <h3 class="category-title">2. Mi Tratamiento</h3>
+            <p class="category-sub">Tu escudo diario de protección.</p>
+          </div>
+        </div>
+
+        <details class="learn-item">
+          <summary>¿Qué pasa si olvido una dosis?</summary>
+          <p>No te entres en pánico. Si te acordaste a las pocas horas, tómatela de inmediato. <strong>Pero ojo:</strong> si faltan <em>menos de 6 horas</em> para tu próxima dosis programada, es mejor saltarte la dosis olvidada y esperar la siguiente para no tomarlas tan juntas. ¡No te tomes dos pastillas al mismo tiempo! Si tienes dudas recurrentes, consúltalo con tu médico.</p>
+        </details>
+
+        <details class="learn-item">
+          <summary>¿Qué significa ser Indetectable?</summary>
+          <p>Significa que el tratamiento ha reducido la cantidad de virus en tu sangre a niveles tan bajos que las máquinas de laboratorio ya no lo detectan. El virus sigue controlado y no te hace daño.</p>
+        </details>
+
+        <details class="learn-item">
+          <summary>¿Qué es I=I (U=U)?</summary>
+          <p><strong>Indetectable = Intransmisible (Undetectable = Untransmittable).</strong> Es el hallazgo científico más importante: una persona con VIH en tratamiento que mantiene su carga viral indetectable durante más de 6 meses <strong>NO TRANSMITE EL VIRUS</strong> por vía sexual a sus parejas, incluso sin condón.</p>
+        </details>
+      </div>
+
+      <!-- SECCIÓN 3: VIDA COTIDIANA -->
+      <div class="learn-category-card">
+        <div class="mascot-header">
+          <div class="mascot-avatar">🌟🍓</div>
+          <div>
+            <h3 class="category-title">3. Vida Cotidiana</h3>
+            <p class="category-sub">Tu día a día en equilibrio.</p>
+          </div>
+        </div>
+
+        <details class="learn-item">
+          <summary>🏠 Familiares: ¿Tengo que decirles?</summary>
+          <p><strong>No, no tienes ninguna obligación de decirles si no quieres.</strong> Muchas veces existe miedo al juicio, al rechazo o a la preocupación excesiva. Tu salud emocional va primero. Si decides decírselo a mamá, papá o hijxs, hazlo cuando te sientas preparadx, en un entorno seguro y respaldadx por alguien de confianza. Si prefieres no decirles nunca, estás en tu total derecho de guardar tu privacidad.</p>
+        </details>
+
+        <details class="learn-item">
+          <summary>🔥 Sexo</summary>
+          <p>El sexo sigue siendo placentero y seguro. Gracias a I=I, PrEP y el condón, tienes todas las herramientas para disfrutar plenamente de tu vida sexual sin culpas ni miedos.</p>
+        </details>
+
+        <details class="learn-item">
+          <summary>❤️ Relaciones</summary>
+          <p>Tú decides cuándo y a quién compartirle tu diagnóstico. La honestidad en pareja abre conversaciones hermosas, pero tu diagnóstico es tu decisión privada.</p>
+        </details>
+
+        <details class="learn-item">
+          <summary>🥗 Alimentación</summary>
+          <p>No necesitas dietas milagrosas ni restrictivas. Comer balanceado (frutas, verduras, proteínas) ayuda a que tu cuerpo absorba mejor tus medicamentos y mantenga tus defensas fuertes.</p>
+        </details>
+
+        <details class="learn-item">
+          <summary>🏋️ Ejercicio</summary>
+          <p>La actividad física es excelente para reducir el estrés, mantener tu densidad ósea y fortalecer tu corazón. ¡Muévete como más te guste!</p>
+        </details>
+
+        <details class="learn-item">
+          <summary>🍷 Alcohol</summary>
+          <p>Un consumo ocasional y moderado de alcohol generalmente no interfiere con tu TAR. Sin embargo, evita los excesos porque podrías olvidar tomar tu pastilla a tiempo.</p>
+        </details>
+
+        <details class="learn-item">
+          <summary>✈️ Viajes</summary>
+          <p>¡Viaja a donde quieras! Solo recuerda llevar tus medicamentos en tu equipaje de mano con unos días extra de reserva por cualquier retraso de vuelo.</p>
+        </details>
+      </div>
+
+      <!-- SECCIÓN 4: DERECHOS -->
+      <div class="learn-category-card">
+        <div class="mascot-header">
+          <div class="mascot-avatar">⚖️✊</div>
+          <div>
+            <h3 class="category-title">4. Derechos & Justicia</h3>
+            <p class="category-sub">Conoce las leyes que te respaldan en México.</p>
+          </div>
+        </div>
+
+        <details class="learn-item">
+          <summary>Derecho a la Atención Médica en México</summary>
+          <p>En México, el acceso al Tratamiento Antirretroviral (TAR) y a tus estudios de Carga Viral / CD4 es <strong>totalmente gratuito y garantizado por ley</strong> a través del IMSS, ISSSTE o Centros Especializados como CLINICA CONDESA o CAPASITS.</p>
+        </details>
+
+        <details class="learn-item">
+          <summary>Despidos y Pruebas de VIH en el Trabajo</summary>
+          <p>Es <strong>totalmente ilegal</strong> que una empresa te exija una prueba de VIH para contratarte o que te despida por tu diagnóstico. La NOM-010-SSA2 respalda la confidencialidad de tu estado de salud laboral.</p>
+        </details>
+
+        <details class="learn-item">
+          <summary>¿Cómo denunciar discriminación?</summary>
+          <p>Si sufres discriminación o violaciones a tus derechos humanos, puedes acudir ante el <strong>CONAPRED</strong> (Consejo Nacional Para Prevenir La Discriminación) o las Comisiones de Derechos Humanos locales. ¡No estás solx!</p>
+        </details>
+      </div>
+    </section>
+
+    <!-- MÓDULO 4: COMUNIDAD -->
+    <section id="view-module4" class="page-view">
+      <div class="section-title"><span class="deo">DEO</span> <span class="arm">ARM</span> • COMUNIDAD</div>
+      
+      <!-- BOTÓN ESTELAR: VIHVITAS Y COLEANDO -->
+      <div class="community-hero-card" onclick="openVihvitasAction()">
+        <div class="hero-icon">❤️‍🔥</div>
+        <div>
+          <h2>VIHVITAS Y COLEANDO</h2>
+          <p>Próximamente: chats, encuentros y redes de apoyo presenciales y virtuales. ¡No somos solo un diagnóstico!</p>
+        </div>
+        <div class="hero-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+      </div>
+
+      <!-- SECCIÓN: ESPACIOS, MENTORÍAS Y APOYOS (DINÁMICA) -->
+      <div class="section-title" style="margin-top: 24px;"><i class="fa-solid fa-users-rectangle" style="color: var(--cochineal);"></i> Espacios & Mentorías</div>
+      <p class="text-gray-12" style="margin-bottom: 12px;">Comunidades segmentadas para encontrarnos entre pares.</p>
+      
+      <div class="community-grid" id="spaces-grid-container">
+        <!-- Generado dinámicamente desde JS -->
+      </div>
+
+      <!-- SECCIÓN: EVENTOS -->
+      <div class="section-title" style="margin-top: 24px;"><i class="fa-solid fa-calendar-days" style="color: var(--cochineal);"></i> Eventos & Encuentros</div>
+      <p class="text-gray-12" style="margin-bottom: 12px;">Actividades y espacios para compartir en comunidad.</p>
+      
+      <div class="community-grid" id="events-grid-container">
+        <!-- Generado dinámicamente desde JS -->
+      </div>
+    </section>
+
+    <!-- MÓDULO 5: RECURSOS & DIRECTORIO -->
+    <section id="view-module5" class="page-view">
+      <div class="section-title"><span class="deo">DEO</span> <span class="arm">ARM</span> • RECURSOS</div>
+      <p class="text-gray-12" style="margin-bottom: 20px;">Directorio y redes de apoyo esenciales en México para VIH, salud y bienestar.</p>
+
+      <!-- 1. DIRECTORIO MÉDICO & INSTITUCIONAL -->
+      <div class="learn-category-card">
+        <div class="mascot-header">
+          <div class="mascot-avatar">🏥</div>
+          <div>
+            <h3 class="category-title">1. Directorio Oficial</h3>
+            <p class="category-sub">Unidades especializadas de atención pública en México.</p>
+          </div>
+        </div>
+
+        <details class="learn-item">
+          <summary>CAPASITS (Centros Ambulatorios)</summary>
+          <p>Unidades especializadas de la Secretaría de Salud que brindan atención médica, infectológica, psicológica, nutricional y entrega gratuita de TAR de manera confidencial.</p>
+        </details>
+
+        <details class="learn-item">
+          <summary>SAIH (Servicios de Atención Integral)</summary>
+          <p>Módulos de atención integral implementados en hospitales generales y regionales para el seguimiento clínico de pacientes con VIH.</p>
+        </details>
+
+        <details class="learn-item">
+          <summary>Clínicas y Hospitales IMSS / ISSSTE</summary>
+          <p>Clínicas del Instituto Mexicano del Seguro Social y del ISSSTE que cuentan con áreas de infectología y abasto de medicamentos antirretrovirales para derechohabientes.</p>
+        </details>
+
+        <details class="learn-item">
+          <summary>Organizaciones Civiles (Vive Libre y más)</summary>
+          <p>Redes aliadas como <strong>Vive Libre</strong>, Fundación Mexicana para la Lucha contra el Sida, y espacios comunitarios que ofrecen acompañamiento humano y pruebas gratuitas. 
+            <br><br><em>Próximamente podrás añadir más centros y notas personalizadas aquí.</em></p>
+        </details>
+      </div>
+
+      <!-- 2. ESPECIALIDADES & SERVICIOS -->
+      <div class="learn-category-card">
+        <div class="mascot-header">
+          <div class="mascot-avatar">🩺</div>
+          <div>
+            <h3 class="category-title">2. Servicios Especializados</h3>
+            <p class="category-sub">Profesionales y áreas clave para tu salud integral.</p>
+          </div>
+        </div>
+
+        <details class="learn-item">
+          <summary>Psicólogos / Salud Mental</summary>
+          <p>Acompañamiento emocional libre de estigma, especializado en aceptación de diagnóstico, manejo de ansiedad y redes afectivas.</p>
+        </details>
+
+        <details class="learn-item">
+          <summary>Infectólogos</summary>
+          <p>Médicos especialistas encargados de monitorear tu carga viral, recuento de CD4 y ajustar tu esquema de tratamiento antirretroviral (TAR).</p>
+        </details>
+
+        <details class="learn-item">
+          <summary>Nutriólogos</summary>
+          <p>Especialistas en nutrición clínica orientados a fortalecer tu sistema inmune, metabolismo y bienestar general con una dieta balanceada.</p>
+        </details>
+
+        <details class="learn-item">
+          <summary>Dentistas (Libres de Estigma)</summary>
+          <p>Clínicas y consultorios odontológicos con protocolos universales de bioseguridad, que atienden con calidez y respeto absoluto.</p>
+        </details>
+
+        <details class="learn-item">
+          <summary>Laboratorios & Análisis</summary>
+          <p>Centros de extracción y laboratorios clínicos para la realización periódica de biometrías hemáticas, químicas sanguíneas, cargas virales y pruebas de CD4.</p>
+        </details>
+      </div>
+
+      <!-- 3. PROGRAMAS DE PREVENCIÓN -->
+      <div class="learn-category-card">
+        <div class="mascot-header">
+          <div class="mascot-avatar">🛡️</div>
+          <div>
+            <h3 class="category-title">3. Programas & Prevención</h3>
+            <p class="category-sub">Herramientas de salud pública y reducción de riesgos.</p>
+          </div>
+        </div>
+
+        <details class="learn-item">
+          <summary>PrEP (Profilaxis Pre-Exposición)</summary>
+          <p>Medicamento tomado antes de tener relaciones sexuales para prevenir de forma altamente efectiva la adquisición del VIH.</p>
+        </details>
+
+        <details class="learn-item">
+          <summary>PEP (Profilaxis Post-Exposición)</summary>
+          <p>Tratamiento de emergencia de 28 días que se debe iniciar idealmente dentro de las primeras 72 horas posteriores a una posible exposición al virus.</p>
+        </details>
+
+        <details class="learn-item">
+          <summary>Condones & Métodos de Barrera</summary>
+          <p>Distribución de preservativos internos y externos gratuitos o accesibles en clínicas, clínicas de salud sexual y organizaciones comunitarias.</p>
+        </details>
+
+        <details class="learn-item">
+          <summary>Lubricantes Base Agua</summary>
+          <p>Insumo fundamental para el cuidado de los tejidos, la comodidad y la prevención de microlesiones durante las prácticas sexuales.</p>
+        </details>
+
+        <details class="learn-item">
+          <summary>Pruebas Rápidas de VIH</summary>
+          <p>Tamizajes seguros en sangre o fluido oral con resultados listos en menos de 20 minutos, disponibles en CAPASITS y asociaciones civiles.</p>
+        </details>
+      </div>
+
+      <!-- 4. AYUDAS & APOYOS SOCIALES -->
+      <div class="learn-category-card">
+        <div class="mascot-header">
+          <div class="mascot-avatar">🤝</div>
+          <div>
+            <h3 class="category-title">4. Ayudas & Redes de Apoyo</h3>
+            <p class="category-sub">Soporte alimentario, legal y comunitario.</p>
+          </div>
+        </div>
+
+        <details class="learn-item">
+          <summary>Bancos de Alimentos</summary>
+          <p>Redes de asistencia alimentaria comunitaria orientadas a apoyar a personas en situaciones económicas vulnerables o durante procesos clínicos complejos.</p>
+        </details>
+
+        <details class="learn-item">
+          <summary>Apoyos Económicos y Sociales</summary>
+          <p>Programas gubernamentales locales o subsidios de fundaciones destinados a transporte médico y necesidades prioritarias.</p>
+        </details>
+
+        <details class="learn-item">
+          <summary>Asesoría Legal (Derechos Humanos)</summary>
+          <p>Acompañamiento jurídico gratuito ante casos de discriminación laboral, negativa de atención médica o violación a la confidencialidad.</p>
+        </details>
+
+        <details class="learn-item">
+          <summary>Refugios y Casas de Transito</summary>
+          <p>Espacios seguros de acogida temporal para personas en situaciones de vulnerabilidad extrema, violencia intrafamiliar o desplazamiento.</p>
+        </details>
+
+        <details class="learn-item">
+          <summary>Organizaciones Comunitarias</summary>
+          <p>Colectivos de pares, redes de apoyo mutuo y activismo local que fomentan el tejido social, la cultura de derechos y la autonomía.</p>
+        </details>
+      </div>
+    </section>
+
+    <!-- MÓDULO 6: MI VIDA -->
+    <section id="view-module6" class="page-view">
+      <div class="section-title"><span class="deo">DEO</span> <span class="arm">ARM</span> • MI VIDA</div>
+      
+      <!-- Hero Card: El mensaje central -->
+      <div class="life-hero-card">
+        <div class="life-hero-tag">Perspectiva Integral</div>
+        <h2 class="life-hero-title">El VIH es solo una parte de tu vida.</h2>
+        <p class="life-hero-desc">Tu diagnóstico no define tu valor, tus capacidades ni tus sueños. Aquí cultivamos todo lo demás que hace quien eres.</p>
+      </div>
+
+      <!-- Cita o reflexión -->
+      <div class="life-quote-box">
+        "No se trata de minimizar lo médico, sino de darle el tamaño correcto para que todo lo demás —tus metas, tus afectos y tus proyectos— tenga el espacio que merece."
+      </div>
+
+      <!-- Grid de Áreas de Vida -->
+      <div class="life-grid">
+        <div class="life-card">
+          <div class="life-card-icon">👥</div>
+          <div class="life-card-title">Relaciones</div>
+          <div class="life-card-sub">Vínculos sanos, familia y amistades que suman.</div>
+        </div>
+
+        <div class="life-card">
+          <div class="life-card-icon">❤️</div>
+          <div class="life-card-title">Parejas</div>
+          <div class="life-card-sub">Amor, acuerdos, indetectabilidad = intransmisible (I=I).</div>
+        </div>
+
+        <div class="life-card">
+          <div class="life-card-icon">🔥</div>
+          <div class="life-card-title">Sexualidad</div>
+          <div class="life-card-sub">Placer libre de culpa, autoconocimiento y cuidado.</div>
+        </div>
+
+        <div class="life-card">
+          <div class="life-card-icon">🪞</div>
+          <div class="life-card-title">Autoestima</div>
+          <div class="life-card-sub">Reconocimiento propio más allá del estigma.</div>
+        </div>
+
+        <div class="life-card">
+          <div class="life-card-icon">💼</div>
+          <div class="life-card-title">Trabajo</div>
+          <div class="life-card-sub">Desarrollo profesional y metas laborales.</div>
+        </div>
+
+        <div class="life-card">
+          <div class="life-card-icon">📚</div>
+          <div class="life-card-title">Estudios</div>
+          <div class="life-card-sub">Formación académica y crecimiento constante.</div>
+        </div>
+
+        <div class="life-card">
+          <div class="life-card-icon">🎯</div>
+          <div class="life-card-title">Metas personales</div>
+          <div class="life-card-sub">Proyección a futuro y ambiciones de vida.</div>
+        </div>
+
+        <div class="life-card">
+          <div class="life-card-icon">💡</div>
+          <div class="life-card-title">Proyectos</div>
+          <div class="life-card-sub">Creación, marca personal, escritura y diseño.</div>
+        </div>
+      </div>
+
+      <!-- Sección de Bienestar Global -->
+      <div class="status-card" style="align-items: flex-start; text-align: left;">
+        <div class="text-bold-16" style="margin-bottom: 6px; color: var(--cream);">🧘 Bienestar Integral</div>
+        <p class="text-gray-12" style="line-height: 1.5;">
+          Cuidar de tu salud física (incluyendo tu tratamiento) es el cimiento, pero tu salud mental, emocional y tus pasiones son lo que construyen la casa.
+        </p>
+      </div>
+    </section>
+
+    <!-- BARRA DE NAVEGACIÓN INFERIOR -->
+    <nav class="bottom-nav">
+      <button class="nav-item active" data-target="view-module1" onclick="navigateTo('view-module1', this)">
+        <i class="fa-solid fa-house"></i>
+        <span>Inicio</span>
+      </button>
+      <button class="nav-item" data-target="view-module2" onclick="navigateTo('view-module2', this)">
+        <i class="fa-solid fa-pills"></i>
+        <span>Tratamiento</span>
+      </button>
+      <button class="nav-item" data-target="view-module3" onclick="navigateTo('view-module3', this)">
+        <i class="fa-solid fa-graduation-cap"></i>
+        <span>Aprender</span>
+      </button>
+      <button class="nav-item" data-target="view-module4" onclick="navigateTo('view-module4', this)">
+        <i class="fa-solid fa-people-group"></i>
+        <span>Comunidad</span>
+      </button>
+      <button class="nav-item" data-target="view-module5" onclick="navigateTo('view-module5', this)">
+        <i class="fa-solid fa-book-medical"></i>
+        <span>Recursos</span>
+      </button>
+      <button class="nav-item" data-target="view-module6" onclick="navigateTo('view-module6', this)">
+        <i class="fa-solid fa-seedling"></i>
+        <span>Mi vida</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- MODAL DE FORMULARIO INICIAL (ONBOARDING) -->
+  <div class="modal-overlay" id="onboarding-modal">
+    <div class="onboarding-card">
+      <h2>¡Bienvenidx a CHAVIHTXS!</h2>
+      <p class="subtitle">Ingresa tus datos para personalizar tu experiencia.</p>
+
+      <form id="onboarding-form" onsubmit="handleOnboardingSubmit(event)">
+        <div class="form-group">
+          <label>Nombre o Apodo <span class="req">*</span></label>
+          <input type="text" id="input-nickname" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Edad</label>
+            <input type="number" id="input-age" min="1" max="120">
+          </div>
+          <div class="form-group">
+            <label>Tratamiento <span class="req">*</span></label>
+            <select id="input-treatment" required>
+              <option value="TAR">TAR (VIH)</option>
+              <option value="PREP">PrEP</option>
+              <option value="PEP">PEP</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Esquema Actual <span class="req">*</span></label>
+          <input type="text" id="input-med-name" placeholder="Ej. Dovato, Biktarvy..." required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Frascos Extra</label>
+            <input type="number" id="input-extra-bottles" value="1">
+          </div>
+          <div class="form-group">
+            <label>Stock Pastillas <span class="req">*</span></label>
+            <input type="number" id="input-current-stock" value="30" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Fecha Diagnóstico</label>
+            <input type="date" id="input-diagnosis-date">
+          </div>
+          <div class="form-group">
+            <label>Inicio Tratamiento <span class="req">*</span></label>
+            <input type="date" id="input-start-date" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Última Carga Viral</label>
+            <input type="text" id="input-viral-load" placeholder="Ej. I=I">
+          </div>
+          <div class="form-group">
+            <label>Dato CD4</label>
+            <input type="number" id="input-cd4" placeholder="Ej. 650">
+          </div>
+        </div>
+        <button type="submit" class="btn-submit">Guardar y Comenzar</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
