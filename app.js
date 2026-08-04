@@ -506,3 +506,11 @@ function updateUIDoseTime() {
   }
   scheduleDoseNotification(doseTime);
 }
+function promptUpdatePills() {
+  const current = localStorage.getItem('count_pills') || '30';
+  const val = prompt("¿Cuántas pastillas te quedan exactamente?", current);
+  if (val !== null && !isNaN(val)) {
+    localStorage.setItem('count_pills', parseInt(val, 10));
+    updateUIInventory();
+  }
+}
