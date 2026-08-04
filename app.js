@@ -514,3 +514,64 @@ function promptUpdatePills() {
     updateUIInventory();
   }
 }
+function markDoseTaken() {
+  const todayStr = new Date().toISOString().split('T')[0]; // Fecha actual YYYY-MM-DD
+  const lastTakenDate = localStorage.getItem('last_dose_date');
+  let currentStreak = parseInt(localStorage.getItem('dose_streak') || '0', 10);
+  let currentPills = parseInt(localStorage.getItem('count_pills') || '30', 10);
+
+  // Evitar sumar doble si ya la marcó hoy
+  if (lastTakenDate === todayStr) {
+    alert("¡Ya registraste tu dosis de hoy, bb! Vas excelente.");
+    return;
+  }
+
+  // Comprobar si fue racha continua o se rompió
+  if (lastTakenDate) {
+    const lastDate = new Date(lastTakenDate);
+    const currentDate = new Date(todayStr);
+    const diffTime = currentDate - lastDate;
+    const diffDays = diffTime / (1000 * 3600 * 24);
+
+    if (diffDays === 1) {
+      // Tomada al día siguiente continuo: Sube racha
+      currentStreak += 1;
+    } else if (diffDays > 1) {
+      // Se pasó más de un día: Se reinicia la racha a 1
+      currentStreak = 1;
+    }
+  } else {
+    // Primer registro de la vida
+    currentStreak = 1;
+  }
+
+  // Descontar una pastilla del stock actual
+  if (currentPills > 0) {
+    currentPills -= 1;
+  }
+
+  // Guardar en localStorage
+  localStorage.setItem('last_dose_date', todayStr);
+  localStorage.setItem('dose_streak', currentStreak);
+  localStorage.setItem('count_pills', currentPills);
+
+  // Actualizar la interfaz visualmente
+  updateUIStreak();
+  updateUIInventory();
+
+  // Cambiar estado visual del botón temporalmente
+  const btnText = document.getElementById('btn-dosis-text');
+  if (btnText) {
+    btnText.innerText = "¡DOSIS REGISTRADA!";
+    setTimeout(() => { btnText.innerText = "DOSIS LISTA"; }, 3000);
+  }
+}
+
+// Función para pintar la racha en la pantalla
+function updateUIStreak() {
+  const streakDisplay = document.getElementById('streak-time-display');
+  const streakDays = localStorage.getItem('dose_streak') || '0';
+  if (streakDisplay) {
+    streakDisplay.innerText = `${streakDays} ${streakDays == 1 ? 'día' : 'días'}`;
+  }
+}
