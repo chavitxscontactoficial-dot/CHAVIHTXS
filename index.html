@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>CHAVIHTXS - PWA</title>
   <meta name="theme-color" content="#120206">
-  
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0d1117">
+ 
   <!-- Estilos e Iconos -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -121,7 +123,8 @@
         </div>
         <div style="display: flex; gap: 10px;">
           <button class="btn-inv" onclick="addFullBottle()"><i class="fa-solid fa-plus"></i> +1 Frasco</button>
-          <button class="btn-inv" onclick="resetPillCount()"><i class="fa-solid fa-rotate-left"></i> Reset Pastillas</button>
+          <!-- Se asignó ID limpio para controlar el reset de pastillas vía JS -->
+          <button class="btn-inv" id="btn-reset-pills"><i class="fa-solid fa-rotate-left"></i> Reset Pastillas</button>
         </div>
 
         <div class="alert-empty-bottle" id="empty-bottle-alert">
@@ -283,7 +286,7 @@
     <!-- MÓDULO 4: COMUNIDAD -->
     <section id="view-module4" class="page-view">
       <div class="section-title"><span class="deo">DEO</span> <span class="arm">ARM</span> • COMUNIDAD</div>
-      
+     
       <!-- BOTÓN ESTELAR: VIHVITAS Y COLEANDO -->
       <div class="community-hero-card" onclick="openVihvitasAction()">
         <div class="hero-icon">❤️‍🔥</div>
@@ -297,7 +300,7 @@
       <!-- SECCIÓN: ESPACIOS, MENTORÍAS Y APOYOS (DINÁMICA) -->
       <div class="section-title" style="margin-top: 24px;"><i class="fa-solid fa-users-rectangle" style="color: var(--cochineal);"></i> Espacios & Mentorías</div>
       <p class="text-gray-12" style="margin-bottom: 12px;">Comunidades segmentadas para encontrarnos entre pares.</p>
-      
+     
       <div class="community-grid" id="spaces-grid-container">
         <!-- Generado dinámicamente desde JS -->
       </div>
@@ -305,7 +308,7 @@
       <!-- SECCIÓN: EVENTOS -->
       <div class="section-title" style="margin-top: 24px;"><i class="fa-solid fa-calendar-days" style="color: var(--cochineal);"></i> Eventos & Encuentros</div>
       <p class="text-gray-12" style="margin-bottom: 12px;">Actividades y espacios para compartir en comunidad.</p>
-      
+     
       <div class="community-grid" id="events-grid-container">
         <!-- Generado dinámicamente desde JS -->
       </div>
@@ -343,7 +346,7 @@
 
         <details class="learn-item">
           <summary>Organizaciones Civiles (Vive Libre y más)</summary>
-          <p>Redes aliadas como <strong>Vive Libre</strong>, Fundación Mexicana para la Lucha contra el Sida, y espacios comunitarios que ofrecen acompañamiento humano y pruebas gratuitas. 
+          <p>Redes aliadas como <strong>Vive Libre</strong>, Fundación Mexicana para la Lucha contra el Sida, y espacios comunitarios que ofrecen acompañamiento humano y pruebas gratuitas.
             <br><br><em>Próximamente podrás añadir más centros y notas personalizadas aquí.</em></p>
         </details>
       </div>
@@ -460,7 +463,7 @@
     <!-- MÓDULO 6: MI VIDA -->
     <section id="view-module6" class="page-view">
       <div class="section-title"><span class="deo">DEO</span> <span class="arm">ARM</span> • MI VIDA</div>
-      
+     
       <!-- Hero Card: El mensaje central -->
       <div class="life-hero-card">
         <div class="life-hero-tag">Perspectiva Integral</div>
@@ -628,5 +631,14 @@
   </div>
 
   <script src="app.js"></script>
+  <script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('Service Worker registrado con éxito:', reg.scope))
+        .catch(err => console.log('Error al registrar el Service Worker:', err));
+    });
+  }
+</script>
 </body>
 </html>

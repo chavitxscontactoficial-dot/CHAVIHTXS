@@ -326,3 +326,183 @@ function sendToAppsScript(action, payload) {
     body: JSON.stringify({ action: action, payload: payload })
   }).catch(err => console.error("Error conectando con Apps Script:", err));
 }
+/* =================================================_
+   CHAVIHTXS PWA - LÓGICA PRINCIPAL, TRATAMIENTO E INVENTARIO
+   ================================================= */
+
+document.addEventListener('DOMContentLoaded', () => {
+  initializeAppState();
+  initEventListeners();
+  requestNotificationPermission();
+  checkMedicalAppointments();
+});
+
+// 1. INICIALIZACIÓN DE ESTADOS Y LOCALSTORAGE
+function initializeAppState() {
+  if (!localStorage.getItem('count_bottles')) {
+    localStorage.setItem('count_bottles', '1');
+  }
+  if (!localStorage.getItem('count_pills')) {
+    localStorage.setItem('count_pills', '30');
+  }
+  if (!localStorage.getItem('dose_time')) {
+    localStorage.setItem('dose_time', '09:00');
+  }
+  if (!localStorage.getItem('medical_appointments')) {
+    localStorage.setItem('medical_appointments', JSON.stringify([]));
+  }
+
+  updateUIInventory();
+  updateUIDoseTime();
+}
+
+function initEventListeners() {
+  const resetBtn = document.getElementById('btn-reset-pills');
+  if (resetBtn) {
+    resetBtn.removeAttribute('onclick');
+    resetBtn.addEventListener('click', resetPillCount);
+  }
+}
+
+// 2. SOLICITAR PERMISOS DE NOTIFICACIÓN
+function requestNotificationPermission() {
+  if ("Notification" in window && Notification.permission !== "granted") {
+    Notification.requestPermission().then(permission => {
+      if (permission === "granted") {
+        console.log("Permisos de notificación concedidos.");
+      }
+    });
+  }
+}
+
+// 3. LÓGICA DE NOTIFICACIÓN DE LA PRÓXIMA TOMA
+function scheduleDoseNotification(doseTimeStr) {
+  if (!doseTimeStr) return;
+  
+  // Limpiar formato si incluye AM/PM
+  const cleanTime = doseTimeStr.replace(/\s?[AP]M/i, '');
+  const [hours, minutes] = cleanTime.split(':');
+  
+  const now = new Date();
+  const targetTime = new Date();
+  
+  targetTime.setHours(parseInt(hours, 10));
+  targetTime.setMinutes(parseInt(minutes, 10));
+  targetTime.setSeconds(0);
+
+  if (targetTime <= now) {
+    targetTime.setDate(targetTime.getDate() + 1);
+  }
+
+  const timeToWait = targetTime.getTime() - now.getTime();
+
+  setTimeout(() => {
+    if (Notification.permission === "granted") {
+      const title = '¡Es hora de tu tratamiento, bb! 💊';
+      const body = 'Es momento de tomar tu pastilla correspondiente a tu próxima toma.';
+      
+      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'SHOW_NOTIFICATION',
+          title: title,
+          body: body
+        });
+      } else {
+        new Notification(title, { body: body, icon: '/icon-192.png' });
+      }
+    }
+    scheduleDoseNotification(doseTimeStr);
+  }, timeToWait);
+}
+
+// 4. ALERTAS ANTICIPADAS PARA CITAS MÉDICAS (MÍNIMO 2 DÍAS ANTES)
+function checkMedicalAppointments() {
+  const appointments = JSON.parse(localStorage.getItem('medical_appointments') || '[]');
+  const now = new Date();
+
+  appointments.forEach(app => {
+    const appDate = new Date(app.date);
+    const diffTime = appDate.getTime() - now.getTime();
+    const diffDays = diffTime / (1000 * 3600 * 24);
+
+    // Disparar aviso preventivo exacto cuando falten entre 2 y 1.9 días
+    if (diffDays <= 2 && diffDays > 1.9) {
+      if (Notification.permission === "granted") {
+        const title = 'Recordatorio de Cita Médica 🩺';
+        const body = 'Tienes una cita médica en 2 días. Recuerda revisar tus notas y apuntes previos.';
+
+        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({
+            type: 'SHOW_NOTIFICATION',
+            title: title,
+            body: body
+          });
+        } else {
+          new Notification(title, { body: body, icon: '/icon-192.png' });
+        }
+      }
+    }
+  });
+}
+
+// 5. GESTIÓN DE INVENTARIO: BOTÓN "RESET PASTILLAS"
+function resetPillCount() {
+  let currentBottles = parseInt(localStorage.getItem('count_bottles') || '1', 10);
+  let currentPills = parseInt(localStorage.getItem('count_pills') || '30', 10);
+
+  // Al dar reset: Resta -1 al frasco extra y regresa a 30 pastillas el frasco actual
+  if (currentBottles > 0) {
+    currentBottles -= 1;
+  }
+  currentPills = 30;
+
+  localStorage.setItem('count_bottles', currentBottles);
+  localStorage.setItem('count_pills', currentPills);
+
+  updateUIInventory();
+
+  const emptyAlert = document.getElementById('empty-bottle-alert');
+  if (emptyAlert) {
+    emptyAlert.style.display = 'none';
+  }
+}
+
+// Funciones auxiliares adicionales de la PWA
+function addFullBottle() {
+  let currentBottles = parseInt(localStorage.getItem('count_bottles') || '0', 10);
+  currentBottles += 1;
+  localStorage.setItem('count_bottles', currentBottles);
+  updateUIInventory();
+}
+
+function openNewBottle() {
+  resetPillCount();
+}
+
+function editDoseTime() {
+  const currentVal = localStorage.getItem('dose_time') || "09:00";
+  const newTime = prompt("Ingresa la nueva hora de tu toma (Formato HH:MM):", currentVal);
+  if (newTime && /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(newTime)) {
+    localStorage.setItem('dose_time', newTime);
+    updateUIDoseTime();
+  } else if (newTime) {
+    alert("Formato no válido. Usa HH:MM (ej. 09:00)");
+  }
+}
+
+function updateUIInventory() {
+  const bottlesEl = document.getElementById('count-bottles');
+  const pillsEl = document.getElementById('count-pills');
+
+  if (bottlesEl) bottlesEl.innerText = localStorage.getItem('count_bottles');
+  if (pillsEl) pillsEl.innerText = localStorage.getItem('count_pills');
+}
+
+function updateUIDoseTime() {
+  const doseTime = localStorage.getItem('dose_time');
+  const doseTimeDisplay = document.getElementById('mod2-dose-time');
+  if (doseTimeDisplay) {
+    doseTimeDisplay.innerText = doseTime;
+  }
+  scheduleDoseNotification(doseTime);
+}
