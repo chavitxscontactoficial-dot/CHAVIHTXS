@@ -448,26 +448,28 @@ function checkMedicalAppointments() {
 // 5. GESTIÓN DE INVENTARIO: BOTÓN "RESET PASTILLAS"
 function resetPillCount() {
   let currentBottles = parseInt(localStorage.getItem('count_bottles') || '1', 10);
-  let currentPills = parseInt(localStorage.getItem('count_pills') || '30', 10);
+  let currentPills = 30; // Forzamos a 30 directo
 
   // Al dar reset: Resta -1 al frasco extra y regresa a 30 pastillas el frasco actual
   if (currentBottles > 0) {
     currentBottles -= 1;
   }
-  currentPills = 30;
 
+  // Guardamos tanto el inventario como cualquier posible llave de esquema
   localStorage.setItem('count_bottles', currentBottles);
   localStorage.setItem('count_pills', currentPills);
-  
-  // Sincronización del esquema de tratamiento a 30 pastillas
-  localStorage.setItem('esquema_actual', 30);
+  localStorage.setItem('esquema_actual', 30); // Sincronización en almacenamiento
 
+  // Actualizamos la interfaz general del inventario
   updateUIInventory();
-  
-  // Actualizar la interfaz de tratamiento si existe la función
-  if (typeof updateUITreatment === 'function') {
-    updateUITreatment();
-  }
+
+  // FORZAR ACTUALIZACIÓN EN VIVO DE LOS ELEMENTOS EN PANTALLA (INICIO Y TRATAMIENTO)
+  // Cambia 'esquema-actual-el' por el ID exacto que tenga tu elemento de texto en HTML si es diferente
+  const esquemaInicioEl = document.getElementById('esquema-actual'); 
+  const tratamientoEl = document.getElementById('count-pills'); 
+
+  if (esquemaInicioEl) esquemaInicioEl.innerText = "30";
+  if (tratamientoEl) tratamientoEl.innerText = "30";
 
   const emptyAlert = document.getElementById('empty-bottle-alert');
   if (emptyAlert) {
