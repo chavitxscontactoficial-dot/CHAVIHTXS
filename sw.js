@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chavihtxs-cache-v2';
+const CACHE_NAME = 'chavihtxs-cache-v3';
 const urlsToCache = [
   './index.html',
   './styles.css',
@@ -8,6 +8,7 @@ const urlsToCache = [
 
 // Instalación del Service Worker
 self.addEventListener('install', event => {
+  self.skipWaiting(); // Fuerza a activar la nueva versión de inmediato
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
@@ -27,19 +28,31 @@ self.addEventListener('activate', event => {
           }
         })
       );
+    }).then(() => {
+      return self.clients.claim(); // Toma el control de las pestañas abiertas al instante
     })
   );
 });
 
-// Interceptar peticiones para servir offline
+// Interceptar peticiones: Primero intenta red, si falla usa caché (Network First)
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request)
+    fetch(event.request)
       .then(response => {
-        return response || fetch(event.request);
+        // Si hay internet, actualizamos la caché con lo más nuevo de forma silenciosa
+        return caches.open(CACHE_NAME).then(cache => {
+          cache.put(event.request, response.clone());
+          return response;
+        });
+      })
+      .catch(() => {
+        // Si no hay red, ahora sí jalamos lo que tengamos guardado offline
+        return caches.match(event.request);
       })
   );
 });
+
+// Manejo de notificaciones
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
     self.registration.showNotification(event.data.title, {
