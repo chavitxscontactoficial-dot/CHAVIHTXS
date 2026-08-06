@@ -564,9 +564,8 @@ function markDoseTaken() {
   if (currentPills > 0) {
     currentPills -= 1;
   }
-}
 
-  // Guardar en localStorage
+  // Guardar en localStorage (¡Aquí estaba la llave mal puesta antes!)
   localStorage.setItem('last_dose_date', todayStr);
   localStorage.setItem('dose_streak', currentStreak);
   localStorage.setItem('count_pills', currentPills);
@@ -575,13 +574,20 @@ function markDoseTaken() {
   updateUIStreak();
   updateUIInventory();
 
+  // Sincronizar ambos elementos en pantalla (Inicio y Tratamiento)
+  const esquemaInicioEl = document.getElementById('stock-count-display');
+  const frascoActualEl = document.getElementById('count-pills');
+
+  if (esquemaInicioEl) esquemaInicioEl.innerText = currentPills;
+  if (frascoActualEl) frascoActualEl.innerText = currentPills;
+
   // Cambiar estado visual del botón temporalmente
   const btnText = document.getElementById('btn-dosis-text');
   if (btnText) {
     btnText.innerText = "¡DOSIS REGISTRADA!";
     setTimeout(() => { btnText.innerText = "DOSIS LISTA"; }, 3000);
   }
-
+}
 
 // Función para pintar la racha en la pantalla
 function updateUIStreak() {
