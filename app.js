@@ -448,28 +448,26 @@ function checkMedicalAppointments() {
 // 5. GESTIÓN DE INVENTARIO: BOTÓN "RESET PASTILLAS"
 function resetPillCount() {
   let currentBottles = parseInt(localStorage.getItem('count_bottles') || '1', 10);
-  let currentPills = 30; // Forzamos a 30 directo
+  let currentPills = 30; // Forzamos a 30
 
   // Al dar reset: Resta -1 al frasco extra y regresa a 30 pastillas el frasco actual
   if (currentBottles > 0) {
     currentBottles -= 1;
   }
 
-  // Guardamos tanto el inventario como cualquier posible llave de esquema
+  // Guardamos en el almacenamiento local
   localStorage.setItem('count_bottles', currentBottles);
   localStorage.setItem('count_pills', currentPills);
-  localStorage.setItem('esquema_actual', 30); // Sincronización en almacenamiento
 
   // Actualizamos la interfaz general del inventario
   updateUIInventory();
 
-  // FORZAR ACTUALIZACIÓN EN VIVO DE LOS ELEMENTOS EN PANTALLA (INICIO Y TRATAMIENTO)
-  // Cambia 'esquema-actual-el' por el ID exacto que tenga tu elemento de texto en HTML si es diferente
-  const esquemaInicioEl = document.getElementById('esquema-actual'); 
-  const tratamientoEl = document.getElementById('count-pills'); 
+  // FORZAR LA ACTUALIZACIÓN EN AMBOS MÓDULOS DE LA PWA
+  const esquemaInicioEl = document.getElementById('stock-count-display'); // Esquema Actual (Inicio)
+  const frascoActualEl = document.getElementById('count-pills');         // Pastillas Frasco Actual (Tratamiento)
 
-  if (esquemaInicioEl) esquemaInicioEl.innerText = "30";
-  if (tratamientoEl) tratamientoEl.innerText = "30";
+  if (esquemaInicioEl) esquemaInicioEl.innerText = currentPills;
+  if (frascoActualEl) frascoActualEl.innerText = currentPills;
 
   const emptyAlert = document.getElementById('empty-bottle-alert');
   if (emptyAlert) {
@@ -521,8 +519,13 @@ function promptUpdatePills() {
   const current = localStorage.getItem('count_pills') || '30';
   const val = prompt("¿Cuántas pastillas te quedan exactamente?", current);
   if (val !== null && !isNaN(val)) {
-    localStorage.setItem('count_pills', parseInt(val, 10));
+    const newPills = parseInt(val, 10);
+    localStorage.setItem('count_pills', newPills);
+    
+    // Refrescar ambos lados en pantalla
     updateUIInventory();
+    const esquemaInicioEl = document.getElementById('stock-count-display');
+    if (esquemaInicioEl) esquemaInicioEl.innerText = newPills;
   }
 }
 
