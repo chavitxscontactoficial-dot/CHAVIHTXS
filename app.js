@@ -597,3 +597,30 @@ function updateUIStreak() {
     streakDisplay.innerText = `${streakDays} ${streakDays == 1 ? 'día' : 'días'}`;
   }
 }
+
+function mostrarAvisoActualizacion() {
+  // Creamos el elemento del banner dinámicamente
+  const banner = document.createElement('div');
+  banner.innerHTML = "⚡ Chavihtxs actualizado: Seguimos metiéndole galleta al código.";
+  banner.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #171717;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    border-left: 4px solid #8b0000; /* Tu toque de acento */
+  `;
+  
+  document.body.appendChild(banner);
+
+  // Se quita solito después de 4 segundos
+  setTimeout(() => {
+    banner.remove();
+  }, 4000);
+}

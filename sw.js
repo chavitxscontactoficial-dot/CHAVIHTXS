@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chavihtxs-cache-v1';
+const CACHE_NAME = 'chavihtxs-cache-v2';
 const urlsToCache = [
   './index.html',
   './styles.css',
