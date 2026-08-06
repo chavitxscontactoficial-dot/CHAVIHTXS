@@ -458,8 +458,16 @@ function resetPillCount() {
 
   localStorage.setItem('count_bottles', currentBottles);
   localStorage.setItem('count_pills', currentPills);
+  
+  // Sincronización del esquema de tratamiento a 30 pastillas
+  localStorage.setItem('esquema_actual', 30);
 
   updateUIInventory();
+  
+  // Actualizar la interfaz de tratamiento si existe la función
+  if (typeof updateUITreatment === 'function') {
+    updateUITreatment();
+  }
 
   const emptyAlert = document.getElementById('empty-bottle-alert');
   if (emptyAlert) {
@@ -506,6 +514,7 @@ function updateUIDoseTime() {
   }
   scheduleDoseNotification(doseTime);
 }
+
 function promptUpdatePills() {
   const current = localStorage.getItem('count_pills') || '30';
   const val = prompt("¿Cuántas pastillas te quedan exactamente?", current);
@@ -514,6 +523,7 @@ function promptUpdatePills() {
     updateUIInventory();
   }
 }
+
 function markDoseTaken() {
   const todayStr = new Date().toISOString().split('T')[0]; // Fecha actual YYYY-MM-DD
   const lastTakenDate = localStorage.getItem('last_dose_date');
@@ -549,6 +559,7 @@ function markDoseTaken() {
   if (currentPills > 0) {
     currentPills -= 1;
   }
+}
 
   // Guardar en localStorage
   localStorage.setItem('last_dose_date', todayStr);
@@ -565,7 +576,7 @@ function markDoseTaken() {
     btnText.innerText = "¡DOSIS REGISTRADA!";
     setTimeout(() => { btnText.innerText = "DOSIS LISTA"; }, 3000);
   }
-}
+
 
 // Función para pintar la racha en la pantalla
 function updateUIStreak() {
