@@ -6,7 +6,6 @@
   <title>CHAVIHTXS - PWA</title>
   <meta name="theme-color" content="#120206">
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0d1117">
  
   <!-- Estilos e Iconos -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,6 +13,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,600;0,800;0,900;1,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="styles.css">
+  <!-- Iconos para navegador e iOS -->
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
 </head>
 <body>
 
@@ -90,7 +92,8 @@
     <!-- MÓDULO 2: MI TRATAMIENTO -->
     <section id="view-module2" class="page-view">
       <div class="section-title"><i class="fa-solid fa-clock" style="color: var(--cochineal);"></i> Próxima toma</div>
-      <div class="card-box flex-between">
+      <div class="card-box">
+        <div class="flex-between">
         <div>
           <div class="text-bold-16" id="mod2-med-name">Dovato</div>
           <div class="text-gray-12">Tomar 1 tableta diaria de TAR</div>
@@ -100,14 +103,26 @@
           <span id="mod2-dose-time">09:00 AM</span>
         </div>
       </div>
+      <button onclick="downloadDoseCalendarEvent()" class="btn-inv" style="width: 100%; margin-top: 14px; justify-content: center; gap: 8px;">
+        <i class="fa-solid fa-calendar-plus" style="color: var(--cream);"></i> Sincronizar alarma diaria en mi calendario
+      </button>
+    </div>
 
       <div class="section-title"><i class="fa-solid fa-clipboard-question" style="color: var(--cochineal);"></i> Notas para tu consulta</div>
-      <div class="card-box">
-        <p class="text-gray-12">¿Hay algo que necesites decirle a tu médicx sobre tu tratamiento?</p>
-        <textarea id="doctor-notes" class="notes-input" rows="3" placeholder="Ej. Síntomas leves, dudas sobre medicamentos..."></textarea>
-        <button class="btn-inv" style="float: right; margin-top: 8px; padding: 6px 12px;" onclick="saveDoctorNotes()">Guardar nota</button>
-        <div style="clear: both;"></div>
-      </div>
+        <div class="card-box">
+        <p class="text-gray-12" style="margin-bottom: 10px;">Apunta dudas o síntomas para tu médickx.</p>
+  
+  <!-- Campo de texto y botón añadir -->
+      <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+        <input type="text" id="consultation-note-input" placeholder="Ej. Síntomas leves, dudas..." style="flex: 1; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: #fff;">
+        <button class="btn-inv" onclick="addConsultationNote()" style="padding: 6px 12px;">
+        <i class="fa-solid fa-plus"></i>
+        </button>
+  </div>
+
+  <!-- Contenedor donde se listarán las notas con su bote de basura -->
+  <div id="notes-list-container"></div>
+</div>
 
       <div class="section-title"><i class="fa-solid fa-boxes-stacked" style="color: var(--cochineal);"></i> Inventario</div>
       <div class="card-box">
@@ -147,6 +162,22 @@
     <section id="view-module3" class="page-view">
       <div class="section-title"><i class="fa-solid fa-graduation-cap" style="color: var(--cochineal);"></i> Espacio de Apoyo & Aprendizaje</div>
       <p class="text-gray-12" style="margin-bottom: 20px;">Información clara, sin estigmas y acompañada por nuestros personajes de apoyo.</p>
+      
+      <!-- BANNER A SITIO WEB COMPLETO EN MÓDULO APRENDER -->
+      <a href="https://tu-sitio-web-chavitxs.com" target="_blank" class="card-link-banner">
+        <div class="banner-icon-box">
+        <i class="fa-solid fa-book-open-reader"></i>
+        </div>
+        <div class="banner-content">
+        <div class="banner-title">MÁS INFORMACIÓN & GUÍAS</div>
+        <div class="banner-sub">
+        Visita nuestro sitio web oficial para consultar artículos, recursos completos y guías detalladas sin estigmas.
+        </div>
+        </div>
+        <div class="banner-arrow">
+        <i class="fa-solid fa-chevron-right"></i>
+        </div>
+      </a>
 
       <!-- SECCIÓN 1: DIAGNÓSTICO RECIENTE -->
       <div class="learn-category-card">
@@ -295,28 +326,66 @@
           <p>Próximamente: chats, encuentros y redes de apoyo presenciales y virtuales. ¡No somos solo un diagnóstico!</p>
         </div>
         <div class="hero-arrow"><i class="fa-solid fa-chevron-right"></i></div>
-      </div>
+      </div><br>
+      
+<!-- REDES SOCIALES -->
+  <div class="section-title">
+    <i class="fa-solid fa-share-nodes" style="color: var(--cochineal);"></i> Redes y Espacios
+  </div>
+  <p class="text-gray-12" style="margin-bottom: 14px;">
+    Sigue nuestras redes oficiales, entérate de eventos y conéctate con la red.
+  </p>
 
-      <!-- SECCIÓN: ESPACIOS, MENTORÍAS Y APOYOS (DINÁMICA) -->
-      <div class="section-title" style="margin-top: 24px;"><i class="fa-solid fa-users-rectangle" style="color: var(--cochineal);"></i> Espacios & Mentorías</div>
-      <p class="text-gray-12" style="margin-bottom: 12px;">Comunidades segmentadas para encontrarnos entre pares.</p>
-     
-      <div class="community-grid" id="spaces-grid-container">
-        <!-- Generado dinámicamente desde JS -->
-      </div>
+  <div class="social-grid">
+    <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" class="social-btn">
+      <i class="fa-brands fa-facebook-f" style="color: #1877F2;"></i>
+      <span>Facebook</span>
+    </a>
 
-      <!-- SECCIÓN: EVENTOS -->
-      <div class="section-title" style="margin-top: 24px;"><i class="fa-solid fa-calendar-days" style="color: var(--cochineal);"></i> Eventos & Encuentros</div>
-      <p class="text-gray-12" style="margin-bottom: 12px;">Actividades y espacios para compartir en comunidad.</p>
-     
-      <div class="community-grid" id="events-grid-container">
-        <!-- Generado dinámicamente desde JS -->
-      </div>
+    <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="social-btn">
+      <i class="fa-brands fa-instagram" style="color: #E4405F;"></i>
+      <span>Instagram</span>
+    </a>
+
+    <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" class="social-btn">
+      <i class="fa-brands fa-tiktok" style="color: var(--cream);"></i>
+      <span>TikTok</span>
+    </a>
+
+    <a href="https://x.com" target="_blank" rel="noopener noreferrer" class="social-btn">
+      <i class="fa-brands fa-x-twitter" style="color: var(--cream);"></i>
+      <span>X (Twitter)</span>
+    </a>
+
+    <a href="https://tusitioweb.com" target="_blank" rel="noopener noreferrer" class="social-btn full-width">
+      <i class="fa-solid fa-globe" style="color: var(--cochineal);"></i>
+      <span>Sitio Web Oficial</span>
+    </a>
+  </div>
     </section>
 
     <!-- MÓDULO 5: RECURSOS & DIRECTORIO -->
     <section id="view-module5" class="page-view">
       <div class="section-title">📚 Recursos & Directorio</div>
+
+      <!-- TARJETA ESPECIAL: PREP A DOMICILIO CON VIHVE LIBRE -->
+
+      <a href="prep.html" class="card-box prep-card" style="text-decoration: none; display: block;">
+        <div class="flex-between" style="align-items: center;">
+          <div style="display: flex; align-items: center; gap: 14px;">
+            <div class="prep-icon-badge">
+              <i class="fa-solid fa-pills"></i>
+            </div>
+            <div>
+              <div class="text-bold-16" style="color: var(--cream);">PrEP a Domicilio</div>
+              <div class="text-gray-12" style="margin-top: 2px;">
+                Solicita tu tratamiento preventivo en alianza con <strong>VIHVE LIBRE</strong>.
+              </div>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-right" style="color: var(--cochineal); font-size: 14px;"></i>
+        </div>
+      </a>
 
       <!-- 1. DIRECTORIO MÉDICO & INSTITUCIONAL -->
       <div class="learn-category-card">
@@ -330,7 +399,9 @@
 
         <details class="learn-item">
           <summary>CAPASITS (Centros Ambulatorios)</summary>
-          <p>Unidades especializadas de la Secretaría de Salud que brindan atención médica, infectológica, psicológica, nutricional y entrega gratuita de TAR de manera confidencial.</p>
+          <p>Unidades especializadas de la Secretaría de Salud que brindan atención médica, infectológica, psicológica, nutricional y entrega gratuita de TAR de manera confidencial.
+              <a href="" target="_blank" class="btn-mapa">VER EN MAPA</a>
+          </p>
         </details>
 
         <details class="learn-item">
@@ -350,48 +421,12 @@
         </details>
       </div>
 
-      <!-- 2. ESPECIALIDADES & SERVICIOS -->
-      <div class="learn-category-card">
-        <div class="mascot-header">
-          <div class="mascot-avatar">🩺</div>
-          <div>
-            <h3 class="category-title">2. Servicios Especializados</h3>
-            <p class="category-sub">Profesionales y áreas clave para tu salud integral.</p>
-          </div>
-        </div>
-
-        <details class="learn-item">
-          <summary>Psicólogos / Salud Mental</summary>
-          <p>Acompañamiento emocional libre de estigma, especializado en aceptación de diagnóstico, manejo de ansiedad y redes afectivas.</p>
-        </details>
-
-        <details class="learn-item">
-          <summary>Infectólogos</summary>
-          <p>Médicos especialistas encargados de monitorear tu carga viral, recuento de CD4 y ajustar tu esquema de tratamiento antirretroviral (TAR).</p>
-        </details>
-
-        <details class="learn-item">
-          <summary>Nutriólogos</summary>
-          <p>Especialistas en nutrición clínica orientados a fortalecer tu sistema inmune, metabolismo y bienestar general con una dieta balanceada.</p>
-        </details>
-
-        <details class="learn-item">
-          <summary>Dentistas (Libres de Estigma)</summary>
-          <p>Clínicas y consultorios odontológicos con protocolos universales de bioseguridad, que atienden con calidez y respeto absoluto.</p>
-        </details>
-
-        <details class="learn-item">
-          <summary>Laboratorios & Análisis</summary>
-          <p>Centros de extracción y laboratorios clínicos para la realización periódica de biometrías hemáticas, químicas sanguíneas, cargas virales y pruebas de CD4.</p>
-        </details>
-      </div>
-
-      <!-- 3. PROGRAMAS DE PREVENCIÓN -->
+      <!-- 2. PROGRAMAS DE PREVENCIÓN -->
       <div class="learn-category-card">
         <div class="mascot-header">
           <div class="mascot-avatar">🛡️</div>
           <div>
-            <h3 class="category-title">3. Programas & Prevención</h3>
+            <h3 class="category-title">2. Programas & Prevención</h3>
             <p class="category-sub">Herramientas de salud pública y reducción de riesgos.</p>
           </div>
         </div>
@@ -422,12 +457,12 @@
         </details>
       </div>
 
-      <!-- 4. AYUDAS & APOYOS SOCIALES -->
+      <!-- 3. AYUDAS & APOYOS SOCIALES -->
       <div class="learn-category-card">
         <div class="mascot-header">
           <div class="mascot-avatar">🤝</div>
           <div>
-            <h3 class="category-title">4. Ayudas & Redes de Apoyo</h3>
+            <h3 class="category-title">3. Ayudas & Redes de Apoyo</h3>
             <p class="category-sub">Soporte alimentario, legal y comunitario.</p>
           </div>
         </div>
@@ -458,6 +493,7 @@
         </details>
       </div>
     </section>
+
 
     <!-- MÓDULO 6: MI VIDA -->
     <section id="view-module6" class="page-view">
