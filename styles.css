@@ -724,3 +724,167 @@ body {
   color: #8c8c8c;
   line-height: 1.4;
 }
+
+/* ==========================================
+   MÓDULO COMUNIDAD - REDES SOCIALES
+   ========================================== */
+.social-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 10px;
+  background-color: var(--cochineal-dark, #2b1115);
+  border: 1px solid var(--cochineal, #7a1c28);
+  border-radius: 12px;
+  color: var(--cream, #fff8f0);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: bold;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.social-btn i {
+  font-size: 18px;
+}
+
+/* El botón del sitio web abarca las dos columnas si son impar */
+.social-btn.website {
+  grid-column: span 2;
+}
+
+.social-btn:active {
+  transform: scale(0.97);
+  background-color: var(--cochineal, #7a1c28);
+}
+.social-btn.full-width {
+  grid-column: span 2;
+  justify-content: center;
+}
+
+/* ==========================================
+   TARJETA PREP - VIHVE LIBRE
+   ========================================== */
+.prep-card {
+  border: 1px solid var(--cochineal) !important;
+  background: linear-gradient(135deg, rgba(122, 28, 40, 0.2), var(--card-bg, #161618)) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+
+.prep-card:active {
+  transform: scale(0.98);
+}
+
+.prep-icon-badge {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 12px;
+  background-color: var(--cochineal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.prep-icon-badge i {
+  color: var(--cream);
+  font-size: 20px;
+}
+
+/* BANNER DESTACADO CON BRILLO ROJO */
+.card-link-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(144, 8, 46, 0.08); /* Fondo con un toque rojizo */
+  border: 1px solid var(--cochineal-bright, #b80c3c);
+  border-radius: 18px;
+  padding: 16px;
+  text-decoration: none;
+  color: var(--cream);
+  margin-top: 20px;
+  margin-bottom: 20px;
+  position: relative;
+  transition: all 0.3s ease;
+  
+  /* Resplandor rojo exterior (Glow effect) */
+  box-shadow: 0 0 15px rgba(184, 12, 60, 0.35), 
+              inset 0 0 15px rgba(184, 12, 60, 0.15);
+}
+
+.card-link-banner:hover {
+  background: rgba(144, 8, 46, 0.18);
+  transform: translateY(-2px);
+  /* Brillo más intenso al pasar el cursor */
+  box-shadow: 0 0 25px rgba(184, 12, 60, 0.6), 
+              inset 0 0 20px rgba(184, 12, 60, 0.3);
+}
+
+.banner-icon-box {
+  width: 48px;
+  height: 48px;
+  background: var(--cochineal, #90082e);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: #ffffff;
+  flex-shrink: 0;
+  /* Brillo interno en el cuadrado del ícono */
+  box-shadow: 0 0 12px rgba(217, 4, 41, 0.6);
+}
+
+.banner-content {
+  flex-grow: 1;
+}
+
+.banner-title {
+  font-family: var(--font-title);
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--cream);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.banner-sub {
+  font-size: 12px;
+  color: var(--text-gray);
+  line-height: 1.35;
+}
+
+.banner-arrow {
+  color: var(--cochineal-bright, #b80c3c);
+  font-size: 16px;
+  padding-left: 4px;
+  filter: drop-shadow(0 0 4px rgba(217, 4, 41, 0.8));
+}
+.btn-mapa {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  padding: 2px 8px;
+  background-color: rgba(184, 12, 60, 0.2);
+  border: 1px solid #b80c3c;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.btn-mapa:hover {
+  background-color: #b80c3c;
+  box-shadow: 0 0 10px rgba(184, 12, 60, 0.6);
+}
