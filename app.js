@@ -33,6 +33,7 @@ let doseHistory = {};
 document.addEventListener('DOMContentLoaded', () => {
   loadState();
   renderCommunityModules();
+  checkDoseNotificationTime();
 });
 
 // ROUTER CLIENTE PARA NAVEGAR ENTRE MÓDULOS
@@ -97,21 +98,22 @@ function renderDashboard() {
   document.getElementById('treatment-title-display').innerText = `MI ${userProfile.treatment}`;
   document.getElementById('status-badge-text').innerText = `STATUS ${userProfile.viralLoad}`;
   document.getElementById('cd4-display').innerText = userProfile.cd4;
-  document.getElementById('stock-count-display').innerText = userProfile.currentStock;
   document.getElementById('med-name-display').innerText = userProfile.medName;
 
   // Módulo 2: Tratamiento
   document.getElementById('mod2-med-name').innerText = userProfile.medName;
   document.getElementById('mod2-dose-time').innerText = userProfile.doseTime || '09:00 AM';
-  document.getElementById('doctor-notes').value = userProfile.doctorNotes || '';
   document.getElementById('count-bottles').innerText = userProfile.extraBottles;
-  document.getElementById('count-pills').innerText = userProfile.currentStock;
+
+  const stockActual = localStorage.getItem('count_pills') || userProfile.currentStock;
+  document.getElementById('stock-count-display').innerText = stockActual;
+  document.getElementById('count-pills').innerText = stockActual;
 
   const alertBox = document.getElementById('empty-bottle-alert');
-  if (userProfile.currentStock <= 0) {
-    alertBox.style.display = 'block';
+  if (parseInt(stockActual, 10) <= 0) {
+  alertBox.style.display = 'block';
   } else {
-    alertBox.style.display = 'none';
+  alertBox.style.display = 'none';
   }
 
   // Cálculo de racha
@@ -120,6 +122,8 @@ function renderDashboard() {
 
   checkTodayDoseStatus();
   renderAppointments();
+  checkUpcomingAppointments();
+  renderConsultationNotes();
 }
 
 function calculateTotalDays() {
@@ -185,7 +189,12 @@ function renderAppointments() {
           <div class="text-bold-16">${app.date}</div>
           <div class="text-gray-12">${app.place || 'Consulta Médica'}</div>
         </div>
-        <button class="btn-icon" onclick="deleteAppointment('medical', ${idx})"><i class="fa-solid fa-trash" style="color:#ef4444;"></i></button>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button class="btn-icon" title="Añadir a mi calendario" onclick="downloadCalendarEvent('Cita Médica TAR', '${app.date}', '${app.place || 'Consulta Médica'}')">
+            <i class="fa-solid fa-calendar-plus" style="color: var(--cream);"></i>
+          </button>
+          <button class="btn-icon" onclick="deleteAppointment('medical', ${idx})"><i class="fa-solid fa-trash" style="color:#ef4444;"></i></button>
+        </div>
       </div>
     `).join('');
   }
@@ -200,7 +209,12 @@ function renderAppointments() {
           <div class="text-bold-16">${app.date}</div>
           <div class="text-gray-12">${app.place || 'Clínica / Farmacia'}</div>
         </div>
-        <button class="btn-icon" onclick="deleteAppointment('refill', ${idx})"><i class="fa-solid fa-trash" style="color:#ef4444;"></i></button>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button class="btn-icon" title="Añadir a mi calendario" onclick="downloadCalendarEvent('Resurtido de Medicamento', '${app.date}', '${app.place || 'Clínica / Farmacia'}')">
+            <i class="fa-solid fa-calendar-plus" style="color: var(--cream);"></i>
+          </button>
+          <button class="btn-icon" onclick="deleteAppointment('refill', ${idx})"><i class="fa-solid fa-trash" style="color:#ef4444;"></i></button>
+        </div>
       </div>
     `).join('');
   }
@@ -277,13 +291,6 @@ function editDoseTime() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(userProfile));
     renderDashboard();
   }
-}
-
-function saveDoctorNotes() {
-  userProfile.doctorNotes = document.getElementById('doctor-notes').value;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(userProfile));
-  alert("Nota guardada");
-  sendToAppsScript('updateTreatmentNotes', { nickname: userProfile.nickname, note: userProfile.doctorNotes });
 }
 
 function addFullBottle() {
@@ -366,7 +373,7 @@ function initEventListeners() {
 
 // 2. SOLICITAR PERMISOS DE NOTIFICACIÓN
 function requestNotificationPermission() {
-  if ("Notification" in window && Notification.permission !== "granted") {
+  if ("Notification" in window && Notification.permission === "default") {
     Notification.requestPermission().then(permission => {
       if (permission === "granted") {
         console.log("Permisos de notificación concedidos.");
@@ -518,14 +525,27 @@ function updateUIDoseTime() {
 function promptUpdatePills() {
   const current = localStorage.getItem('count_pills') || '30';
   const val = prompt("¿Cuántas pastillas te quedan exactamente?", current);
-  if (val !== null && !isNaN(val)) {
+  
+  if (val !== null && !isNaN(val) && val.trim() !== "") {
     const newPills = parseInt(val, 10);
-    localStorage.setItem('count_pills', newPills);
     
-    // Refrescar ambos lados en pantalla
+    // 1. Guardar en localStorage para 'Pastillas Frasco Actual'
+    localStorage.setItem('count_pills', newPills);
+
+    // 2. Si manejas la estructura userProfile, actualizarla y guardarla también
+    if (typeof userProfile !== 'undefined' && userProfile) {
+      userProfile.currentStock = newPills;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(userProfile));
+    }
+
+    // 3. Actualizar la interfaz en ambos módulos
     updateUIInventory();
+    
     const esquemaInicioEl = document.getElementById('stock-count-display');
     if (esquemaInicioEl) esquemaInicioEl.innerText = newPills;
+
+    const countPillsEl = document.getElementById('count-pills');
+    if (countPillsEl) countPillsEl.innerText = newPills;
   }
 }
 
@@ -623,4 +643,225 @@ function mostrarAvisoActualizacion() {
   setTimeout(() => {
     banner.remove();
   }, 4000);
+}
+
+// Función para verificar y lanzar notificaciones de citas próximas (ej. 2 días antes)
+function checkUpcomingAppointments() {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Combinar citas médicas y de resurtido
+  const allAppointments = [
+    ...(userProfile.medicalAppointments || []).map(a => ({ ...a, type: 'Cita Médica' })),
+    ...(userProfile.refillAppointments || []).map(a => ({ ...a, type: 'Cita de Resurtido' }))
+  ];
+
+  allAppointments.forEach(app => {
+    if (!app.date) return;
+    
+    // Asumiendo formato de fecha YYYY-MM-DD o DD/MM/YYYY
+    const [year, month, day] = app.date.split('-').map(Number);
+    const appDate = new Date(year, month - 1, day);
+    appDate.setHours(0, 0, 0, 0);
+
+    const diffTime = appDate - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    // Si faltan 2 días o 1 día para la cita
+    if (diffDays === 2 || diffDays === 1) {
+      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'SHOW_NOTIFICATION',
+          title: `Recordatorio: ${app.type}`,
+          body: `Tienes una ${app.type.toLowerCase()} programada para el ${app.date} en ${app.place || 'tu clínica'}.`
+        });
+      }
+    }
+  });
+}
+
+function downloadCalendarEvent(title, dateStr, place) {
+  // Extrae la parte de la fecha si viene en formato texto o timestamp
+  // Reemplaza caracteres para obtener una fecha limpia en formato YYYYMMDD
+  let cleanDate = dateStr.split(' ')[0].replace(/-/g, '').replace(/\//g, '');
+
+  // Si no hay año o es una fecha en texto como "31 de Agosto", usa el año actual
+  if (cleanDate.length < 8) {
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    // Intenta formatear la fecha a un objeto Date válido
+    const parsedDate = new Date(`${dateStr} ${currentYear}`);
+    if (!isNaN(parsedDate)) {
+      cleanDate = parsedDate.toISOString().split('T')[0].replace(/-/g, '');
+    } else {
+      cleanDate = today.toISOString().split('T')[0].replace(/-/g, '');
+    }
+  }
+  
+  // Construye la URL de Google Calendar
+  const url = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
+              `&text=${encodeURIComponent('📌 ' + title)}` +
+              `&dates=${cleanDate}/${cleanDate}` +
+              `&details=${encodeURIComponent('Recordatorio de salud guardado desde CHAVIHTXS PWA')}` +
+              `&location=${encodeURIComponent(place || 'Clínica')}`;
+  
+  // Abre la app o la web del calendario
+  window.open(url, '_blank');
+}
+
+// 1. RENDERIZAR NOTAS
+function renderConsultationNotes() {
+  const notesContainer = document.getElementById('notes-list-container');
+  if (!notesContainer) return;
+
+  if (!userProfile.consultationNotes) {
+    userProfile.consultationNotes = [];
+  }
+
+  if (userProfile.consultationNotes.length === 0) {
+    notesContainer.innerHTML = '<p class="text-gray-12" style="font-style: italic;">No tienes notas guardadas.</p>';
+  } else {
+    notesContainer.innerHTML = userProfile.consultationNotes.map((note, idx) => `
+      <div class="flex-between" style="background: rgba(255, 255, 255, 0.03); padding: 8px 10px; border-radius: 8px; margin-bottom: 6px; border: 1px solid rgba(255,255,255,0.05);">
+        <div class="text-14" style="color: #fff; word-break: break-word; padding-right: 8px;">${note}</div>
+        <button class="btn-icon" onclick="deleteConsultationNote(${idx})" title="Eliminar nota">
+          <i class="fa-solid fa-trash" style="color: #ef4444;"></i>
+        </button>
+      </div>
+    `).join('');
+  }
+}
+
+// 2. AGREGAR NOTA
+function addConsultationNote() {
+  const input = document.getElementById('consultation-note-input');
+  const noteText = input.value.trim();
+
+  if (!noteText) return;
+
+  if (!userProfile.consultationNotes) {
+    userProfile.consultationNotes = [];
+  }
+
+  userProfile.consultationNotes.push(noteText);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(userProfile)); // ✅ Guarda en tu localStorage
+  input.value = '';
+  renderConsultationNotes();
+}
+
+// 3. ELIMINAR NOTA
+function deleteConsultationNote(index) {
+  if (userProfile.consultationNotes && userProfile.consultationNotes[index] !== undefined) {
+    userProfile.consultationNotes.splice(index, 1);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(userProfile)); // ✅ Guarda en tu localStorage
+    renderConsultationNotes();
+  }
+}
+
+// ==========================================
+// REVISOR AUTOMÁTICO DE HORA DE TOMA
+// ==========================================
+function checkDoseNotificationTime() {
+  if (!userProfile || !userProfile.doseTime) return;
+
+  const now = new Date();
+  const hours = now.getHours();
+  const minutes = now.getMinutes();
+
+  // Convierte la hora actual al formato HH:MM AM/PM
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const formattedHours = hours % 12 || 12;
+  const padHours = String(formattedHours).padStart(2, '0');
+  const padMinutes = String(minutes).padStart(2, '0');
+  const currentTimeString = `${padHours}:${padMinutes} ${ampm}`;
+
+  // Verifica si hoy ya se tomó la dosis
+  const todayKey = now.toISOString().split('T')[0];
+  const takenToday = doseHistory[todayKey];
+
+  // Si coincide la hora y no se ha tomado hoy
+  if (currentTimeString === userProfile.doseTime && !takenToday) {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('⏰ ¡Hora de tu tratamiento!', {
+        body: `Hola ${userProfile.nickname || 'amiga'}, es hora de tomar tu dosis de ${userProfile.medName}.`,
+        icon: 'icon-192.png',
+        tag: 'dose-reminder',
+        renotify: true
+      });
+    }
+  }
+}
+
+// Revisa la hora cada 30 segundos
+setInterval(checkDoseNotificationTime, 30000);
+
+// ==========================================
+// ALARMA RECURRENTE EN CALENDARIO (.ICS)
+// Compatibilidad para formatos HH:MM y HH:MM AM/PM
+// ==========================================
+function downloadDoseCalendarEvent() {
+  if (!userProfile || !userProfile.doseTime) {
+    alert("Primero configura tu hora de toma en el perfil.");
+    return;
+  }
+
+  let hours = 9;
+  let minutes = 0;
+  const rawTime = userProfile.doseTime.trim();
+
+  // Detecta si incluye AM/PM
+  if (rawTime.toUpperCase().includes('AM') || rawTime.toUpperCase().includes('PM')) {
+    const [time, modifier] = rawTime.split(' ');
+    const parts = time.split(':');
+    hours = parseInt(parts[0], 10);
+    minutes = parseInt(parts[1], 10);
+
+    if (modifier.toUpperCase() === 'PM' && hours < 12) hours += 12;
+    if (modifier.toUpperCase() === 'AM' && hours === 12) hours = 0;
+  } else {
+    // Formato 24 horas "HH:MM"
+    const parts = rawTime.split(':');
+    hours = parseInt(parts[0], 10);
+    minutes = parseInt(parts[1], 10);
+  }
+
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  
+  const startTime = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}T${pad(hours)}${pad(minutes)}00`;
+  
+  const icsData = 
+`BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//CHAVIHTXS//Tratamiento//ES
+BEGIN:VEVENT
+SUMMARY:⏰ Tomar ${userProfile.medName || 'medicamento'}
+DESCRIPTION:Hola ${userProfile.nickname || 'amigx'}, hora de tu dosis diaria.
+DTSTART:${startTime}
+DTEND:${startTime}
+RRULE:FREQ=DAILY
+BEGIN:VALARM
+TRIGGER:PT0M
+ACTION:DISPLAY
+DESCRIPTION:Recordatorio
+END:VALARM
+END:VEVENT
+END:VCALENDAR`;
+
+  const blob = new Blob([icsData], { type: 'text/calendar;charset=utf-8' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'recordatorio_tratamiento.ics';
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+// Abrir enlace de PrEP a domicilio (VIHVE LIBRE)
+function openPrepLink() {
+  // Reemplaza esta URL con la liga directa al formulario/sitio de VIHVE LIBRE para PrEP
+  const vihveLibreUrl = 'https://vihvelibre.org/'; 
+  
+  window.open(vihveLibreUrl, '_blank', 'noopener,noreferrer');
 }
