@@ -909,25 +909,3 @@ function openPrepLink() {
   
   window.open(vihveLibreUrl, '_blank', 'noopener,noreferrer');
 }
-function forzarActualizacion() {
-    // Borra todas las cachés locales del Service Worker (imágenes, CSS, HTML viejos)
-    if ('caches' in window) {
-        caches.keys().then((names) => {
-            names.forEach((name) => {
-                caches.delete(name);
-            });
-        });
-    }
-    
-    // Pide al Service Worker que busque actualizaciones en GitHub
-    if (navigator.serviceWorker) {
-        navigator.serviceWorker.getRegistrations().then((registrations) => {
-            registrations.forEach((reg) => reg.update());
-        });
-    }
-
-    // Recarga la página medio segundo después para traer todo fresco de GitHub
-    setTimeout(() => {
-        window.location.reload();
-    }, 500);
-}
