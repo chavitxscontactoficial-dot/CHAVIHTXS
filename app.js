@@ -179,41 +179,47 @@ function openVihvitasAction() {
 
 // RENDER DE CITAS (Módulos 1 y 2)
 function renderAppointments() {
+  // 1. RENDERIZAR CITAS MÉDICAS (Módulo 1)
   const medContainer = document.getElementById('medical-list-container');
   if (!userProfile.medicalAppointments || userProfile.medicalAppointments.length === 0) {
     medContainer.innerHTML = '<p class="text-gray-12">No tienes citas médicas programadas.</p>';
   } else {
     medContainer.innerHTML = userProfile.medicalAppointments.map((app, idx) => `
-      <div class="flex-between" style="margin-bottom: 8px;">
+      <div class="flex-between" style="margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05);">
         <div>
-          <div class="text-bold-16">${app.date}</div>
+          <div class="text-bold-16">${app.date} ${app.time ? '• ' + app.time : ''}</div>
           <div class="text-gray-12">${app.place || 'Consulta Médica'}</div>
         </div>
         <div style="display: flex; gap: 8px; align-items: center;">
-          <button class="btn-icon" title="Añadir a mi calendario" onclick="downloadCalendarEvent('Cita Médica TAR', '${app.date}', '${app.place || 'Consulta Médica'}')">
+          <button class="btn-icon" title="Añadir a mi calendario" onclick="downloadCalendarEvent('Cita Médica TAR', '${app.date}', '${app.place || 'Consulta Médica'}', '${app.time || ''}')">
             <i class="fa-solid fa-calendar-plus" style="color: var(--cream);"></i>
           </button>
-          <button class="btn-icon" onclick="deleteAppointment('medical', ${idx})"><i class="fa-solid fa-trash" style="color:#ef4444;"></i></button>
+          <button class="btn-icon" title="Eliminar cita" onclick="deleteAppointment('medical', ${idx})">
+            <i class="fa-solid fa-trash" style="color: #ef4444;"></i>
+          </button>
         </div>
       </div>
     `).join('');
   }
 
+  // 2. RENDERIZAR CITAS DE RESURTIDO (Módulo 2)
   const refillContainer = document.getElementById('refill-list-container');
   if (!userProfile.refillAppointments || userProfile.refillAppointments.length === 0) {
     refillContainer.innerHTML = '<p class="text-gray-12">No tienes citas de resurtido registradas.</p>';
   } else {
     refillContainer.innerHTML = userProfile.refillAppointments.map((app, idx) => `
-      <div class="flex-between" style="margin-bottom: 8px;">
+      <div class="flex-between" style="margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05);">
         <div>
-          <div class="text-bold-16">${app.date}</div>
-          <div class="text-gray-12">${app.place || 'Clínica / Farmacia'}</div>
+          <div class="text-bold-16">${app.date} ${app.time ? '• ' + app.time : ''}</div>
+          <div class="text-gray-12">${app.place || 'Resurtido / Farmacia'}</div>
         </div>
         <div style="display: flex; gap: 8px; align-items: center;">
-          <button class="btn-icon" title="Añadir a mi calendario" onclick="downloadCalendarEvent('Resurtido de Medicamento', '${app.date}', '${app.place || 'Clínica / Farmacia'}')">
+          <button class="btn-icon" title="Añadir a mi calendario" onclick="downloadCalendarEvent('Resurtido de Medicamento', '${app.date}', '${app.place || 'Resurtido / Farmacia'}', '${app.time || ''}')">
             <i class="fa-solid fa-calendar-plus" style="color: var(--cream);"></i>
           </button>
-          <button class="btn-icon" onclick="deleteAppointment('refill', ${idx})"><i class="fa-solid fa-trash" style="color:#ef4444;"></i></button>
+          <button class="btn-icon" title="Eliminar cita" onclick="deleteAppointment('refill', ${idx})">
+            <i class="fa-solid fa-trash" style="color: #ef4444;"></i>
+          </button>
         </div>
       </div>
     `).join('');
@@ -222,18 +228,26 @@ function renderAppointments() {
 
 // AGREGAR Y ELIMINAR CITAS
 function addMedicalAppointment() {
-  const date = prompt("Fecha de la cita médica (Ej. 15 de Octubre - 10:00 AM):");
-  if (!date) return;
-  const place = prompt("Lugar o Clínica (Opcional):") || "Consulta General";
+  const dateInput = prompt("Fecha de tu cita médica (Ej. 15/09/2026 o YYYY-MM-DD):");
+  if (!dateInput) return;
+
+  const timeInput = prompt("Hora de la cita (Ej. 10:30 AM o 14:00):", "09:00 AM");
+  const placeInput = prompt("Lugar / Clínica (opcional):", "Consulta Médica");
 
   if (!userProfile.medicalAppointments) userProfile.medicalAppointments = [];
-  userProfile.medicalAppointments.push({ date, place });
+  
+  userProfile.medicalAppointments.push({
+    date: dateInput.trim(),
+    time: timeInput ? timeInput.trim() : '09:00 AM',
+    place: placeInput ? placeInput.trim() : 'Consulta Médica'
+  });
+
   localStorage.setItem(STORAGE_KEY, JSON.stringify(userProfile));
   renderDashboard();
 }
 
 function addRefillAppointment() {
-  const date = prompt("Fecha de resurtido de medicamentos (Ej. 01 de Noviembre):");
+  const date = prompt("Fecha de resurtido de medicamentos (Ej. 15/09/2026 o YYYY-MM-DD):");
   if (!date) return;
   const place = prompt("Lugar de entrega (Opcional):") || "Farmacia / Clínica";
 
@@ -246,9 +260,11 @@ function addRefillAppointment() {
 function deleteAppointment(type, index) {
   if (type === 'medical') {
     userProfile.medicalAppointments.splice(index, 1);
-  } else {
+  } else if (type === 'refill') {
     userProfile.refillAppointments.splice(index, 1);
   }
+  
+  // Guardar cambios en el almacenamiento local y actualizar la pantalla
   localStorage.setItem(STORAGE_KEY, JSON.stringify(userProfile));
   renderDashboard();
 }
@@ -682,32 +698,60 @@ function checkUpcomingAppointments() {
   });
 }
 
-function downloadCalendarEvent(title, dateStr, place) {
-  // Extrae la parte de la fecha si viene en formato texto o timestamp
-  // Reemplaza caracteres para obtener una fecha limpia en formato YYYYMMDD
-  let cleanDate = dateStr.split(' ')[0].replace(/-/g, '').replace(/\//g, '');
+function downloadCalendarEvent(title, dateStr, place, timeStr) {
+  if (!dateStr) return alert("Fecha no válida");
 
-  // Si no hay año o es una fecha en texto como "31 de Agosto", usa el año actual
-  if (cleanDate.length < 8) {
-    const today = new Date();
-    const currentYear = today.getFullYear();
-    // Intenta formatear la fecha a un objeto Date válido
-    const parsedDate = new Date(`${dateStr} ${currentYear}`);
-    if (!isNaN(parsedDate)) {
-      cleanDate = parsedDate.toISOString().split('T')[0].replace(/-/g, '');
-    } else {
-      cleanDate = today.toISOString().split('T')[0].replace(/-/g, '');
-    }
+  let year, month, day;
+  const parts = dateStr.split(' ')[0].replace(/\//g, '-').split('-');
+  
+  if (parts.length === 3 && parts[0].length === 4) {
+    [year, month, day] = parts;
+  } else if (parts.length === 3) {
+    [day, month, year] = parts;
+  } else {
+    return alert("Formato de fecha no válido");
   }
-  
-  // Construye la URL de Google Calendar
+
+  month = String(month).padStart(2, '0');
+  day = String(day).padStart(2, '0');
+
+  let datesParam = "";
+
+  // Si se ingresó una hora
+  if (timeStr) {
+    // Extraer horas y minutos simples
+    let [hours, minutes] = timeStr.replace(/[^0-9:]/g, '').split(':');
+    hours = hours ? String(hours).padStart(2, '0') : '09';
+    minutes = minutes ? String(minutes).padStart(2, '0') : '00';
+
+    // Ajustar AM/PM si aplica
+    if (timeStr.toLowerCase().includes('pm') && parseInt(hours) < 12) {
+      hours = String(parseInt(hours) + 12);
+    }
+
+    const startTime = `${year}${month}${day}T${hours}${minutes}00`;
+    
+    // Asignar 1 hora de duración por defecto
+    const endHours = String((parseInt(hours) + 1) % 24).padStart(2, '0');
+    const endTime = `${year}${month}${day}T${endHours}${minutes}00`;
+
+    datesParam = `${startTime}/${endTime}`;
+  } else {
+    // Si no hay hora, queda como evento de todo el día (+1 día para endDate)
+    const startDate = `${year}${month}${day}`;
+    const dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    dateObj.setDate(dateObj.getDate() + 1);
+    const endDate = `${dateObj.getFullYear()}${String(dateObj.getMonth() + 1).padStart(2, '0')}${String(dateObj.getDate()).padStart(2, '0')}`;
+    
+    datesParam = `${startDate}/${endDate}`;
+  }
+
   const url = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
-              `&text=${encodeURIComponent('📌 ' + title)}` +
-              `&dates=${cleanDate}/${cleanDate}` +
-              `&details=${encodeURIComponent('Recordatorio de salud guardado desde CHAVIHTXS PWA')}` +
-              `&location=${encodeURIComponent(place || 'Clínica')}`;
-  
-  // Abre la app o la web del calendario
+    `&text=${encodeURIComponent('📌 ' + title)}` +
+    `&dates=${datesParam}` +
+    `&details=${encodeURIComponent('Recordatorio guardado desde CHAVIHTXS PWA')}` +
+    `&location=${encodeURIComponent(place || 'Consulta Médica')}`;
+
   window.open(url, '_blank');
 }
 
