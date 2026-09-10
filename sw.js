@@ -1,12 +1,13 @@
-const CACHE_NAME = 'chavihtxs-cache-v6';
+const CACHE_NAME = 'chavihtxs-cache-v7';
 const urlsToCache = [
   './',
   './index.html',
   './styles.css',
   './app.js',
   './manifest.json',
-  './icon-192.png',
-  './icon-512.png'
+  './icon-512.png',
+  './icon-192.png'
+  
 ];
 
 // Instalación del Service Worker
