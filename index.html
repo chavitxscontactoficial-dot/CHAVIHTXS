@@ -19,7 +19,7 @@
 </head>
 <body>
 
-  <div id="app-container">
+  <div id="app-container" style="position: relative;">
 
     <!-- HEADER INSTITUCIONAL (Fijo) -->
     <header class="brand-header">
@@ -50,6 +50,11 @@
           <span class="val" id="streak-time-display">0 días</span>
         </div>
       </div>
+
+      <!-- CONTENEDOR DE RESCATE DE RACHA (Oculto por defecto) -->
+<div id="streak-rescue-container" style="display: none; margin-top: 20px;">
+  <!-- Aquí se dibujará la viborita cuando se rompa la racha -->
+</div>
 
       <div class="grid-two-cards">
         <div class="info-box">
@@ -156,7 +161,22 @@
       <div class="card-box" id="refill-list-container">
         <p class="text-gray-12">No tienes citas de resurtido registradas.</p>
       </div>
-    </section>
+
+    <!-- === SECCIÓN DE TRATAMIENTOS TEMPORALES (RECETA) === -->
+<div class="flex-between" style="margin-top: 24px; margin-bottom: 12px;">
+  <div class="section-title" style="margin-bottom:0;"><i class="fa-solid fa-pills" style="color: var(--cochineal);"></i> Tratamientos Temporales</div>
+  <button class="btn-inv" style="padding: 6px 12px;" onclick="openTempRecipeModal()">
+    <i class="fa-solid fa-plus"></i> Añadir Tratamiento
+  </button>
+</div>
+
+<!-- Contenedor donde se dibuja el calendario de días y pastillas -->
+<div class="card-box" id="temp-recipe-calendar-container">
+  <p class="text-gray-12">No hay tratamientos temporales activos.</p>
+</div>
+
+  </section>
+    
 
     <!-- MÓDULO 3: APRENDER -->
     <section id="view-module3" class="page-view">
@@ -614,7 +634,59 @@
     </nav>
 
   </div>
+<!-- MODAL PARA CREAR / EDITAR RECETA DE TRATAMIENTO TEMPORAL -->
+<div id="temp-recipe-modal" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 9999; padding: 16px; overflow-y: auto;">
+  <div style="background: #1f060d; border: 1px solid rgba(250, 244, 223, 0.15); padding: 20px; border-radius: 20px; width: 100%; max-width: 440px; max-height: 90vh; overflow-y: auto;">
+    <h3 style="font-size: 18px; margin-bottom: 14px; color: #faf4df; font-family: var(--font-title, sans-serif);">Receta de Tratamiento Temporal</h3>
+    
+    <form id="temp-recipe-form" onsubmit="handleTempRecipeSubmit(event)">
+      
+      <!-- Fechas y Duración -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+        <div>
+          <label style="font-size: 11px; color: #a39397; display: block; margin-bottom: 4px;">Fecha de Inicio</label>
+          <input type="date" id="recipe-start-date" required style="width: 100%; padding: 8px; border-radius: 8px; background: #121214; color: #fff; border: 1px solid #333; font-size: 12px;">
+        </div>
+        <div>
+          <label style="font-size: 11px; color: #a39397; display: block; margin-bottom: 4px;">Duración (Días en receta)</label>
+          <input type="number" id="recipe-duration" min="1" max="90" required placeholder="Ej: 15" style="width: 100%; padding: 8px; border-radius: 8px; background: #121214; color: #fff; border: 1px solid #333; font-size: 12px;">
+        </div>
+      </div>
 
+      <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 14px 0;">
+
+      <!-- Contenedor dinámico de medicamentos -->
+      <div id="medicines-dynamic-list">
+        <!-- Las filas de medicamentos se inyectan aquí con JS -->
+      </div>
+
+      <!-- Botón para añadir otro medicamento en la misma receta -->
+      <button type="button" onclick="addMedicineRow()" style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.05); color: #faf4df; border: 1px dashed rgba(250,244,223,0.3); font-size: 12px; font-weight: bold; cursor: pointer; margin-bottom: 16px;">
+        <i class="fa-solid fa-plus"></i> Añadir otro medicamento
+      </button>
+
+      <!-- Botones de acción del modal -->
+      <div style="display: flex; gap: 10px;">
+        <button type="button" onclick="closeTempRecipeModal()" style="flex: 1; padding: 12px; border-radius: 10px; background: #333; color: #fff; border: none; font-weight: bold; cursor: pointer;">Cancelar</button>
+        <button type="submit" style="flex: 1; padding: 12px; border-radius: 10px; background: #90082e; color: #faf4df; border: none; font-weight: bold; cursor: pointer;">Guardar Receta</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL DE CONCLUSIÓN Y LIMPIEZA -->
+<div id="temp-conclusion-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 10000; padding: 20px;">
+  <div style="background: #1f060d; border: 1px solid rgba(250, 244, 223, 0.2); padding: 24px; border-radius: 20px; width: 100%; max-width: 380px; text-align: center;">
+    <i class="fa-solid fa-circle-check" style="font-size: 40px; color: #34d399; margin-bottom: 12px;"></i>
+    <h3 style="font-size: 18px; margin-bottom: 8px; color: #faf4df; font-family: var(--font-title, sans-serif);">¡Tratamiento Concluido!</h3>
+    <p style="font-size: 13px; color: #a39397; margin-bottom: 20px; line-height: 1.4;">Tu tratamiento ha concluido, ¿necesitas añadir algo más o modificar la receta?</p>
+    
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <button onclick="extendOrEditRecipe()" style="padding: 12px; border-radius: 10px; background: rgba(255,255,255,0.08); color: #faf4df; border: 1px solid rgba(250,244,223,0.2); font-weight: bold; cursor: pointer;">Sí, necesito añadir / editar</button>
+      <button onclick="confirmDeleteRecipe()" style="padding: 12px; border-radius: 10px; background: #90082e; color: #faf4df; border: none; font-weight: bold; cursor: pointer;">No, eliminar tratamiento temporal</button>
+    </div>
+  </div>
+</div>
   <!-- MODAL DE FORMULARIO INICIAL (ONBOARDING) -->
   <div class="modal-overlay" id="onboarding-modal">
     <div class="onboarding-card">
@@ -677,8 +749,9 @@
         <button type="submit" class="btn-submit">Guardar y Comenzar</button>
       </form>
     </div>
-  </div>
 
+  </div>
+  <script src="minigames.js"></script>
   <script src="app.js"></script>
   <script>
   if ('serviceWorker' in navigator) {
