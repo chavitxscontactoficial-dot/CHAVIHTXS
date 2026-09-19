@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadState();
   renderCommunityModules();
   checkDoseNotificationTime();
+  checkStreakStatus();
 });
 
 // ROUTER CLIENTE PARA NAVEGAR ENTRE MÓDULOS
@@ -124,6 +125,7 @@ function renderDashboard() {
   renderAppointments();
   checkUpcomingAppointments();
   renderConsultationNotes();
+  renderTempRecipeCalendar();
 }
 
 function calculateTotalDays() {
@@ -306,6 +308,33 @@ function editDoseTime() {
     userProfile.doseTime = newTime;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(userProfile));
     renderDashboard();
+  }
+}
+
+// Añade esta función en app.js para verificar si la racha se rompió al abrir la app
+function checkStreakStatus() {
+  const lastTakenDate = localStorage.getItem('last_dose_date');
+  const todayStr = new Date().toISOString().split('T')[0];
+  
+  if (!lastTakenDate) return;
+
+  const lastDate = new Date(lastTakenDate);
+  const currentDate = new Date(todayStr);
+  const diffTime = currentDate - lastDate;
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  const gameContainer = document.getElementById('streak-rescue-container');
+  if (!gameContainer) return;
+
+  // Si pasaron más de 1 día sin tomar la pastilla, la racha se rompe y se muestra el juego
+  if (diffDays > 1) {
+    gameContainer.style.display = 'block';
+    // Inicializamos el juego de la viborita dentro de este contenedor
+    if (typeof initSnakeGame === 'function') {
+      initSnakeGame('streak-rescue-container');
+    }
+  } else {
+    gameContainer.style.display = 'none';
   }
 }
 
@@ -908,4 +937,209 @@ function openPrepLink() {
   const vihveLibreUrl = 'https://vihvelibre.org/'; 
   
   window.open(vihveLibreUrl, '_blank', 'noopener,noreferrer');
+}
+
+// ==========================================
+// GESTIÓN DE TRATAMIENTOS TEMPORALES (RECETAS)
+// ==========================================
+
+function openTempRecipeModal(existingData = null) {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('recipe-start-date').value = existingData ? existingData.startDate : today;
+  document.getElementById('recipe-duration').value = existingData ? existingData.duration : '';
+  
+  const container = document.getElementById('medicines-dynamic-list');
+  container.innerHTML = '';
+
+  if (existingData && existingData.medicines) {
+    existingData.medicines.forEach(med => addMedicineRow(med));
+  } else {
+    addMedicineRow(); // Fila inicial por defecto
+  }
+
+  const modal = document.getElementById('temp-recipe-modal');
+  if (modal) {
+    modal.style.display = 'flex';
+  }
+}
+
+function closeTempRecipeModal() {
+  document.getElementById('temp-recipe-modal').style.display = 'none';
+}
+
+function addMedicineRow(data = null) {
+  const container = document.getElementById('medicines-dynamic-list');
+  const rowId = 'med_row_' + Date.now() + Math.random().toString(36).substr(2, 5);
+
+  const nameVal = data ? data.name : '';
+  const doseVal = data ? data.dose : '';
+  const timeVal = data ? data.time : '09:00';
+
+  const rowDiv = document.createElement('div');
+  rowDiv.className = 'med-row-item';
+  rowDiv.id = rowId;
+  rowDiv.style.cssText = "background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 12px; border-radius: 12px; margin-bottom: 10px; position: relative;";
+
+  rowDiv.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+      <span style="font-size: 11px; font-weight: bold; color: var(--cochineal, #b80c3c);">Medicamento</span>
+      <button type="button" onclick="document.getElementById('${rowId}').remove()" style="background: none; border: none; color: #a39397; cursor: pointer; font-size: 13px;"><i class="fa-solid xmark fa-trash-can"></i></button>
+    </div>
+    <div style="margin-bottom: 8px;">
+      <input type="text" class="med-name-input" required placeholder="Nombre / Marca / Compuesto" value="${nameVal}" style="width: 100%; padding: 8px; border-radius: 6px; background: #121214; color: #fff; border: 1px solid #333; font-size: 12px;">
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+      <div>
+        <label style="font-size: 10px; color: #a39397; display: block; margin-bottom: 2px;">Dosis (ej. 1 tableta c/8h)</label>
+        <input type="text" class="med-dose-input" required placeholder="1 tab c/ 8 hrs" value="${doseVal}" style="width: 100%; padding: 8px; border-radius: 6px; background: #121214; color: #fff; border: 1px solid #333; font-size: 12px;">
+      </div>
+      <div>
+        <label style="font-size: 10px; color: #a39397; display: block; margin-bottom: 2px;">Hora de toma</label>
+        <input type="time" class="med-time-input" required value="${timeVal}" style="width: 100%; padding: 8px; border-radius: 6px; background: #121214; color: #fff; border: 1px solid #333; font-size: 12px;">
+      </div>
+    </div>
+  `;
+
+  container.appendChild(rowDiv);
+}
+
+function handleTempRecipeSubmit(event) {
+  event.preventDefault();
+  if (!userProfile) return;
+
+  const startDate = document.getElementById('recipe-start-date').value;
+  const duration = parseInt(document.getElementById('recipe-duration').value) || 1;
+
+  const rowItems = document.querySelectorAll('.med-row-item');
+  const medicines = [];
+
+  rowItems.forEach(item => {
+    medicines.push({
+      name: item.querySelector('.med-name-input').value.trim(),
+      dose: item.querySelector('.med-dose-input').value.trim(),
+      time: item.querySelector('.med-time-input').value
+    });
+  });
+
+  if (medicines.length === 0) {
+    alert("Agrega al menos un medicamento.");
+    return;
+  }
+
+  userProfile.tempRecipe = {
+    startDate,
+    duration,
+    medicines,
+    checks: userProfile.tempRecipe?.checks || {} // Mantener marcas previas si se edita
+  };
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(userProfile));
+  closeTempRecipeModal();
+  renderTempRecipeCalendar();
+}
+
+function renderTempRecipeCalendar() {
+  const container = document.getElementById('temp-recipe-calendar-container');
+  if (!container) return;
+
+  if (!userProfile || !userProfile.tempRecipe) {
+    container.innerHTML = `<p class="text-gray-12">No hay tratamientos temporales activos.</p>`;
+    return;
+  }
+
+  const recipe = userProfile.tempRecipe;
+  const startDateObj = new Date(recipe.startDate + 'T00:00:00');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Calcular fecha de fin
+  const endDateObj = new Date(startDateObj);
+  endDateObj.setDate(startDateObj.getDate() + recipe.duration - 1);
+
+  // Verificar si ya concluyó el plazo
+  if (today > endDateObj) {
+    document.getElementById('temp-conclusion-modal').style.display = 'flex';
+  }
+
+  // Generar secuencia de días desde startDate por la duración establecida (Ej. Jueves a Miércoles)
+  let html = `
+    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(250,244,223,0.1); border-radius: 16px; padding: 14px; margin-bottom: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div>
+          <div style="font-weight: 700; font-size: 13px; color: var(--cream);">Calendario de Receta</div>
+          <div style="font-size: 11px; color: var(--text-gray);">Del ${recipe.startDate} al ${endDateObj.toISOString().split('T')[0]} (${recipe.duration} días)</div>
+        </div>
+        <div style="display: flex; gap: 6px;">
+          <button onclick="openTempRecipeModal(userProfile.tempRecipe)" style="background: none; border: none; color: var(--cream); cursor: pointer; font-size: 13px; padding: 4px;"><i class="fa-solid fa-pen"></i></button>
+          <button onclick="confirmDeleteRecipe()" style="background: none; border: none; color: #a39397; cursor: pointer; font-size: 13px; padding: 4px;"><i class="fa-solid fa-trash-can"></i></button>
+        </div>
+      </div>
+  `;
+
+  const daysOfWeekNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
+  for (let i = 0; i < recipe.duration; i++) {
+    const currentDayDate = new Date(startDateObj);
+    currentDayDate.setDate(startDateObj.getDate() + i);
+    const dateStr = currentDayDate.toISOString().split('T')[0];
+    const dayName = daysOfWeekNames[currentDayDate.getDay()];
+    const formattedDate = `${dayName} ${currentDayDate.getDate()}/${currentDayDate.getMonth() + 1}`;
+
+    const isToday = currentDayDate.getTime() === today.getTime();
+
+    html += `
+      <div style="background: ${isToday ? 'rgba(144,8,46,0.15)' : 'rgba(255,255,255,0.02)'}; border: 1px solid ${isToday ? 'rgba(144,8,46,0.4)' : 'rgba(255,255,255,0.06)'}; border-radius: 10px; padding: 10px; margin-bottom: 8px;">
+        <div style="font-weight: 700; font-size: 12px; color: ${isToday ? 'var(--cream)' : 'var(--text-gray)'}; margin-bottom: 6px; display: flex; justify-content: space-between;">
+          <span>${formattedDate}</span>
+          ${isToday ? '<span style="font-size: 9px; background: var(--cochineal); color: #fff; padding: 1px 6px; border-radius: 6px;">HOY</span>' : ''}
+        </div>
+    `;
+
+    recipe.medicines.forEach((med, medIndex) => {
+      const checkKey = `${dateStr}_${medIndex}`;
+      const isChecked = recipe.checks && recipe.checks[checkKey] ? true : false;
+
+      html += `
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-top: 1px solid rgba(255,255,255,0.04);">
+          <div>
+            <div style="font-size: 12px; font-weight: 600; color: var(--cream);">${med.name}</div>
+            <div style="font-size: 10px; color: var(--text-gray);">${med.dose} • <i class="fa-regular fa-clock"></i> ${med.time} hrs</div>
+          </div>
+          <label style="cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-gray);">
+            <span>Tomado</span>
+            <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleTempCheck('${dateStr}', ${medIndex}, this.checked)" style="width: 16px; height: 16px; accent-color: var(--cochineal); cursor: pointer;">
+          </label>
+        </div>
+      `;
+    });
+
+    html += `</div>`;
+  }
+
+  html += `</div>`;
+  container.innerHTML = html;
+}
+
+function toggleTempCheck(dateStr, medIndex, isChecked) {
+  if (!userProfile || !userProfile.tempRecipe) return;
+  if (!userProfile.tempRecipe.checks) userProfile.tempRecipe.checks = {};
+
+  const checkKey = `${dateStr}_${medIndex}`;
+  userProfile.tempRecipe.checks[checkKey] = isChecked;
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(userProfile));
+}
+
+function extendOrEditRecipe() {
+  document.getElementById('temp-conclusion-modal').style.display = 'none';
+  openTempRecipeModal(userProfile.tempRecipe);
+}
+
+function confirmDeleteRecipe() {
+  document.getElementById('temp-conclusion-modal').style.display = 'none';
+  if (confirm("¿Estás seguro de eliminar este tratamiento temporal? Se borrará todo el calendario.")) {
+    delete userProfile.tempRecipe;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(userProfile));
+    renderTempRecipeCalendar();
+  }
 }
